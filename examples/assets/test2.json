@@ -1,0 +1,1447 @@
+[
+  {
+    "children": [
+      {
+        "text": "前言"
+      }
+    ],
+    "type": "heading-two",
+    "key": "ckEzJ"
+  },
+  {
+    "children": [
+      {
+        "text": "最近做一个功能，涉及到了 Buffer 和 string 之间编解码。过程中发现自己几乎彻底遗忘了相关的知识，因此有必要记录在纸上。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "GXwWM"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "text": "年轻的时候喜欢把“公式”而不是结果记到脑袋里，但到老了才发现，即使记住了公式，也记不住是怎么串联公式推导结果了。🤔"
+          }
+        ],
+        "type": "paragraph",
+        "key": "wmdZN"
+      }
+    ],
+    "type": "block-quote",
+    "key": "JwfzK"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "bAHeR"
+  },
+  {
+    "children": [
+      {
+        "text": "基础概念"
+      }
+    ],
+    "type": "heading-two",
+    "key": "aKaZt"
+  },
+  {
+    "children": [
+      {
+        "text": "对编解码有疑惑，八成是没有正确理解 Buffer 和 string，尤其是 string。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "tRacr"
+  },
+  {
+    "children": [
+      {
+        "text": "在准确理解它们后，应该能顺理成章的搞清楚编解码这个问题。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "QAciw"
+  },
+  {
+    "children": [
+      {
+        "text": "什么是 Buffer"
+      }
+    ],
+    "type": "heading-three",
+    "key": "sJdjw"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "text": "文档 "
+          },
+          {
+            "children": [
+              {
+                "text": "https://nodejs.org/api/buffer.html#buffer"
+              }
+            ],
+            "type": "link",
+            "url": "https://nodejs.org/api/buffer.html#buffer",
+            "key": "fkSWK"
+          },
+          {
+            "text": ""
+          }
+        ],
+        "type": "paragraph",
+        "key": "nSQpX"
+      }
+    ],
+    "type": "block-quote",
+    "key": "KMjsp"
+  },
+  {
+    "children": [
+      {
+        "text": "Buffer 代表的是一串固定长度的字节序列。详细解释一下："
+      }
+    ],
+    "type": "paragraph",
+    "key": "pYchY"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "一个字节 byte 是8位 bit，范围是 00000000~11111111"
+              }
+            ],
+            "type": "paragraph",
+            "key": "WihSY"
+          }
+        ],
+        "type": "list-item",
+        "key": "XxwEK"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "固定长度指一个 Buffer 的长度是固定的，也就是说里面能塞几个字节是固定不变的"
+              }
+            ],
+            "type": "paragraph",
+            "key": "dFFXC"
+          }
+        ],
+        "type": "list-item",
+        "key": "HcPnH"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "一串字节序列，也就是说里面的字节是有顺序的连起来的"
+              }
+            ],
+            "type": "paragraph",
+            "key": "czXzn"
+          }
+        ],
+        "type": "list-item",
+        "key": "tskwP"
+      }
+    ],
+    "type": "bulleted-list",
+    "start": 1,
+    "key": "WxBHr"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "tJdGe"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "text": "Node 的 Buffer 是不能按位操作的"
+          }
+        ],
+        "type": "paragraph",
+        "key": "sEszS"
+      }
+    ],
+    "type": "block-quote",
+    "key": "XRNJB"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "QnGce"
+  },
+  {
+    "children": [
+      {
+        "text": "至于 Buffer 里面到底塞了哪些字节，这些字节又代表什么，就关系到了编码，下面再讲"
+      }
+    ],
+    "type": "paragraph",
+    "key": "kmadR"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "pWswa"
+  },
+  {
+    "children": [
+      {
+        "text": "什么是 character"
+      }
+    ],
+    "type": "heading-three",
+    "key": "rZbAA"
+  },
+  {
+    "children": [
+      {
+        "text": "character 就是字符。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "MHxwr"
+  },
+  {
+    "children": [
+      {
+        "text": "字符是可视符号，具有一定的形状，可以凭肉眼区分。通俗地讲就是人眼可观察可识别的通过形态区分的符号。每个不同的字符有不同的含义。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "bGCBB"
+  },
+  {
+    "children": [
+      {
+        "text": "在计算机术语中，字符就是一个可以渲染在屏幕上的符号。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "BjsSC"
+  },
+  {
+    "children": [
+      {
+        "text": "在 JS 中，不存在字符类型，只有字符串 string 类型，单个字符也是一个 string，如 "
+      },
+      {
+        "children": [
+          {
+            "text": "'a'"
+          }
+        ],
+        "type": "inline-code",
+        "key": "jDJFW"
+      },
+      {
+        "text": "  。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "mnjri"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "bhQpY"
+  },
+  {
+    "children": [
+      {
+        "text": "什么是 string"
+      }
+    ],
+    "type": "heading-three",
+    "key": "AxRsd"
+  },
+  {
+    "children": [
+      {
+        "text": "string 是每个人在刚开始学习编程语言时最先接触的概念和类型之一，JS 中的 string 更是一种基本类型，因此很多人对 string 的理解和认知都停留在初识时，但 string 其实不是那么的简单。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "NBfHk"
+  },
+  {
+    "children": [
+      {
+        "text": "譬如当我问，js 中的 string 是什么编码，是 utf8 编码吗？可能有很多人犹疑不定。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "QwtAh"
+  },
+  {
+    "children": [
+      {
+        "text": "正是因为很多人对 string 的概念不清晰，要么压根不知道，要么是把 string 和 "
+      },
+      {
+        "children": [
+          {
+            "text": "Buffer.toString"
+          }
+        ],
+        "type": "inline-code",
+        "key": "ytSib"
+      },
+      {
+        "text": "提到的编码混淆，才会疑惑。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "nwwmN"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "nTJYM"
+  },
+  {
+    "children": [
+      {
+        "text": "JS 的 string 代表的是一串字符序列，使用 utf16(或 ucs-2) 编码，而 V8 引擎实现使用的是 utf16le 编码。详细解释一下："
+      }
+    ],
+    "type": "paragraph",
+    "key": "mAJZp"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "字符：就是上面的 character 字符"
+              }
+            ],
+            "type": "paragraph",
+            "key": "FCFrw"
+          }
+        ],
+        "type": "list-item",
+        "key": "bASer"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "一串序列，也就是说里面的字符们是有顺序的连起来的"
+              }
+            ],
+            "type": "paragraph",
+            "key": "SZNDf"
+          }
+        ],
+        "type": "list-item",
+        "key": "PBwkC"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "编码"
+              }
+            ],
+            "type": "paragraph",
+            "key": "WRmjw"
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "字符本身的码点 code point：根据 Unicode 标准，一个字符对应一个数字，如 😎 对应 "
+                      },
+                      {
+                        "text": "U+1F60E",
+                        "underlined": true
+                      },
+                      {
+                        "text": " 也就是 128526，"
+                      },
+                      {
+                        "children": [
+                          {
+                            "text": "'😎'.codePointAt(0) === 128526"
+                          }
+                        ],
+                        "type": "inline-code",
+                        "key": "bSHas"
+                      },
+                      {
+                        "text": ""
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "dFABx"
+                  }
+                ],
+                "type": "list-item",
+                "key": "tdXjd"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "该码点的二进制编码：utf16 是将 Unicode 码点映射到字节表示的编码规则，字节序列中每两个字节是一个码元 code unit(char code)"
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "sdYby"
+                  }
+                ],
+                "type": "list-item",
+                "key": "TnZGz"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "因此 JS 的 string 在内存中的表示，就是将输入的字符序列对应的码点根据 utf16 编码规则变成的字节序列。如 😎 对应的 128526 根据 utf16le(little endian)  编码为 "
+                      },
+                      {
+                        "children": [
+                          {
+                            "text": "3D D8 0E DE"
+                          }
+                        ],
+                        "type": "inline-code",
+                        "key": "sFaxS"
+                      },
+                      {
+                        "text": "共四个字节"
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "TfFYY"
+                  }
+                ],
+                "type": "list-item",
+                "key": "hdBZf"
+              }
+            ],
+            "type": "bulleted-list",
+            "key": "QiTHr"
+          }
+        ],
+        "type": "list-item",
+        "key": "cFYzt"
+      }
+    ],
+    "type": "bulleted-list",
+    "start": 1,
+    "key": "DyiZP"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "code",
+    "content": "Buffer.from([parseInt('3d', 16),parseInt('d8', 16),parseInt('0e', 16),parseInt('de', 16)]).toString('utf16le') === '😎'\n'\\ud83d\\ude0e' === '😎' // C/Java style notation\n'😎'.charCodeAt(0）=== 55357 === parseInt('d83d', 16)\n'😎'.charCodeAt(1) === 56846 === parseInt('de0e', 16)",
+    "language": "javascript",
+    "key": "nPJaD"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "ZAihC"
+  },
+  {
+    "children": [
+      {
+        "text": "看到这里，你应该明白了，JS 的 string 使用 utf16 编码是什么意思"
+      }
+    ],
+    "type": "paragraph",
+    "key": "QPdQW"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "rrycC"
+  },
+  {
+    "children": [
+      {
+        "text": "字符编码"
+      }
+    ],
+    "type": "heading-two",
+    "key": "GpJWT"
+  },
+  {
+    "children": [
+      {
+        "text": "上面 string 部分已经提及了一些编码相关的内容，这节汇总讨论一下字符编码。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "bDKzR"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "text": "由于字符串是字符组成的，所以当谈到字符串编码就是指字符编码。"
+          }
+        ],
+        "type": "paragraph",
+        "key": "zHnih"
+      }
+    ],
+    "type": "block-quote",
+    "key": "ijazP"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "CDkDD"
+  },
+  {
+    "children": [
+      {
+        "text": "日常我们对 string 的使用场景，基本都是使用引号或 "
+      },
+      {
+        "children": [
+          {
+            "text": "String"
+          }
+        ],
+        "type": "inline-code",
+        "key": "pfYhG"
+      },
+      {
+        "text": "构造器将一串字符填入，来声明一个所谓的 string，然后我们可以用这个 string 来通过 "
+      },
+      {
+        "children": [
+          {
+            "text": "console.log"
+          }
+        ],
+        "type": "inline-code",
+        "key": "PDyhF"
+      },
+      {
+        "text": "显示在终端里、保存到数据库再取出来、通过 http 响应返回给前端等等，在 debug 界面、在终端里、在网页上，我们看到的是我们输入的那些字符。这些字符，有英文有中文有 emoji，都属于 Unicode 编码范围。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "THjPG"
+  },
+  {
+    "children": [
+      {
+        "text": "我们也知道，string、或者说是编程语言声明的一切，在运行时都是存在在内存中、在网络请求传输管道中，而这里只有二进制 bit 和字节 Byte。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "GhQYR"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "dYWDH"
+  },
+  {
+    "children": [
+      {
+        "text": "总的来说，计算机领域中的字符编码，就是将字符序列的 Unicode 编码通过某种规则变为可以用字节（二进制）序列表示的形式，对应的解码就是反过来的操作。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "hWQrh"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "cJRBb"
+  },
+  {
+    "children": [
+      {
+        "text": "常见的字符编码有下面这么几种，其中有些是 Node 内建支持的："
+      }
+    ],
+    "type": "paragraph",
+    "key": "KEQZJ"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "utf8：每个 Unicode 字符转换为不定长的字节序列"
+              }
+            ],
+            "type": "paragraph",
+            "key": "exKcQ"
+          }
+        ],
+        "type": "list-item",
+        "key": "KSCep"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "utf16：每个 Unicode 字符转换为2或4字节的定长序列，其中还区分端序 LE 和 BE，Node 支持的是 utf16le"
+              }
+            ],
+            "type": "paragraph",
+            "key": "EEXJe"
+          }
+        ],
+        "type": "list-item",
+        "key": "bEjTd"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "latin1：只覆盖0-255 范围的 Unicode 字符，字节序列为1字节长度"
+              }
+            ],
+            "type": "paragraph",
+            "key": "YAmKK"
+          }
+        ],
+        "type": "list-item",
+        "key": "sipfi"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "ascii：覆盖0-127 范围的字符，7位长度，为了方便起见，一般占据一个字节来存放"
+              }
+            ],
+            "type": "paragraph",
+            "key": "cRsfn"
+          }
+        ],
+        "type": "list-item",
+        "key": "smtFk"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "GB2312, GBK, GB18030：中国标准字符集和编码，基本上可以算是 Unicode 字符集的子集，但编码规则和 UTF 系列不兼容，就不详细说明了"
+              }
+            ],
+            "type": "paragraph",
+            "key": "YeZEs"
+          }
+        ],
+        "type": "list-item",
+        "key": "ksKFM"
+      }
+    ],
+    "type": "bulleted-list",
+    "start": 1,
+    "key": "CCmTZ"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "text": "冷知识：有的地方——有的语言、有的环境，一个字节长度不是8位"
+          }
+        ],
+        "type": "paragraph",
+        "key": "HDyCb"
+      }
+    ],
+    "type": "block-quote",
+    "key": "dnQMi"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "cEWEd"
+  },
+  {
+    "children": [
+      {
+        "text": "Node 的字符编解码"
+      }
+    ],
+    "type": "heading-three",
+    "key": "kRfjf"
+  },
+  {
+    "children": [
+      {
+        "text": "程序和外部（网络、磁盘文件等）通信都是通过二进制，当要将字符送到程序外部时，需要编码，反之从外部接收时需要解码。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "XBGRd"
+  },
+  {
+    "children": [
+      {
+        "text": "这里用 utf8 编码举个例子，看看字符编解码到底是怎么个过程："
+      }
+    ],
+    "type": "paragraph",
+    "key": "xdaGj"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "解码 decode 或称之为反序列化 deserialize"
+              }
+            ],
+            "type": "paragraph",
+            "key": "RwCAZ"
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "从外部接收到的二进制放在 Buffer 中"
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "FcPwp"
+                  }
+                ],
+                "type": "list-item",
+                "key": "WGtza"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "使用 "
+                      },
+                      {
+                        "children": [
+                          {
+                            "text": "Buffer.prototype.toString('utf8')"
+                          }
+                        ],
+                        "type": "inline-code",
+                        "key": "emkYf"
+                      },
+                      {
+                        "text": "将 buffer 变成 string"
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "rsiGh"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "text": "将 buffer 中的字节根据 utf8 编码规则，转换为 Unicode 字符"
+                              }
+                            ],
+                            "type": "paragraph",
+                            "key": "JWtTc"
+                          }
+                        ],
+                        "type": "list-item",
+                        "key": "pZFZB"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "text": "再构造 string：将字符根据 utf16 编码规则转换为字节序列，生成对应的 string"
+                              }
+                            ],
+                            "type": "paragraph",
+                            "key": "EAhGB"
+                          }
+                        ],
+                        "type": "list-item",
+                        "key": "SCtsk"
+                      }
+                    ],
+                    "type": "numbered-list",
+                    "key": "SwnHC"
+                  }
+                ],
+                "type": "list-item",
+                "key": "ctbpi"
+              }
+            ],
+            "type": "numbered-list",
+            "key": "MTFrF"
+          }
+        ],
+        "type": "list-item",
+        "key": "kyzkw"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "编码 encode 或称之为序列化 serialize"
+              }
+            ],
+            "type": "paragraph",
+            "key": "caAzf"
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "要把 string 传送出去，比如 http response 的 "
+                      },
+                      {
+                        "children": [
+                          {
+                            "text": "write(buffer: Buffer)"
+                          }
+                        ],
+                        "type": "inline-code",
+                        "key": "wyCbz"
+                      },
+                      {
+                        "text": ""
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "xmaxh"
+                  }
+                ],
+                "type": "list-item",
+                "key": "TswiA"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "使用 "
+                      },
+                      {
+                        "children": [
+                          {
+                            "text": "Buffer.from(string, 'utf8')"
+                          }
+                        ],
+                        "type": "inline-code",
+                        "key": "aCSyb"
+                      },
+                      {
+                        "text": "将 string 变成 buffer"
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "ahPtc"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "text": "将 string 中的字节序列根据 utf16 编码规则转换为 Unicode 字符"
+                              }
+                            ],
+                            "type": "paragraph",
+                            "key": "wfnQy"
+                          }
+                        ],
+                        "type": "list-item",
+                        "key": "mwQjG"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "text": "将 Unicode 字符根据 utf8 编码转换为字节序列，放入 buffer"
+                              }
+                            ],
+                            "type": "paragraph",
+                            "key": "iHGHx"
+                          }
+                        ],
+                        "type": "list-item",
+                        "key": "ZGJCJ"
+                      }
+                    ],
+                    "type": "numbered-list",
+                    "key": "iXccb"
+                  }
+                ],
+                "type": "list-item",
+                "key": "TMGZG"
+              }
+            ],
+            "type": "numbered-list",
+            "key": "EnnaC"
+          }
+        ],
+        "type": "list-item",
+        "key": "XWtXP"
+      }
+    ],
+    "type": "bulleted-list",
+    "start": 1,
+    "key": "iJhHe"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "FXSym"
+  },
+  {
+    "children": [
+      {
+        "text": "其他编码也是一样的过程，对于 Node 原生不支持的编码，也有第三方库可以使用。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "Hbskr"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "ehfrt"
+  },
+  {
+    "children": [
+      {
+        "text": "二进制编码"
+      }
+    ],
+    "type": "heading-two",
+    "key": "MMJpy"
+  },
+  {
+    "children": [
+      {
+        "text": "有人可能会疑惑，为什么上面没有提到 Buffer encoding 的 base64, hex 等编码，这是因为这些编码不是用来对字符，而是对二进制编码的，它们将二进制序列编码为字符。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "KixtC"
+  },
+  {
+    "children": [
+      {
+        "text": "需要对二进制编码的理由是，为了使得二进制序列信息能通过本来为普通字符传输建立的通道，这些通道有浏览器网页、邮件、url、各种聊天工具等等，上面呈现的字符无一例外都是可以被人眼识别和手抄的。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "AHFtH"
+  },
+  {
+    "children": [
+      {
+        "text": "由于几乎所有的常见通道的字符载体都支持 ascii 编码，所以 base64, hex 等编码的结果，都是 ascii 字符。但 url 这个载体是个例外，url 支持的字符集比 ascii 更少（无 + /），所以有 base64url 等编码，编码结果适用于在 url 中携带。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "bTkpn"
+  },
+  {
+    "children": [
+      {
+        "text": "Node 的二进制编解码"
+      }
+    ],
+    "type": "heading-three",
+    "key": "YNFPW"
+  },
+  {
+    "children": [
+      {
+        "text": "二进制编解码和字符编解码过程是反着的"
+      }
+    ],
+    "type": "paragraph",
+    "key": "bXwJT"
+  },
+  {
+    "children": [
+      {
+        "text": "下面用 base64 编码举例，看看二进制编解码是怎么个过程："
+      }
+    ],
+    "type": "paragraph",
+    "key": "ZkjPG"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "解码 decode 或称之为 parse"
+              }
+            ],
+            "type": "paragraph",
+            "key": "Ktbaz"
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "从外部接收到了 base64 编码的 string"
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "hJkYt"
+                  }
+                ],
+                "type": "list-item",
+                "key": "HfZMe"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "使用 "
+                      },
+                      {
+                        "children": [
+                          {
+                            "text": "Buffer.from(string, 'base64')"
+                          }
+                        ],
+                        "type": "inline-code",
+                        "key": "ZDimz"
+                      },
+                      {
+                        "text": "将 string 变成 buffer"
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "kkRby"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "text": "根据 utf16 编码规则将 string 内存放的字节序列转换为 ascii 字符"
+                              }
+                            ],
+                            "type": "paragraph",
+                            "key": "yjdDN"
+                          }
+                        ],
+                        "type": "list-item",
+                        "key": "fNFwh"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "text": "根据 base64 编码规则将字符转换为字节序列存放到 buffer 中"
+                              }
+                            ],
+                            "type": "paragraph",
+                            "key": "zfWjG"
+                          }
+                        ],
+                        "type": "list-item",
+                        "key": "TFESx"
+                      }
+                    ],
+                    "type": "numbered-list",
+                    "key": "hwhHS"
+                  }
+                ],
+                "type": "list-item",
+                "key": "rJTXp"
+              }
+            ],
+            "type": "numbered-list",
+            "key": "npxrM"
+          }
+        ],
+        "type": "list-item",
+        "key": "YxwTJ"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "编码 encode 或称之为 stringify"
+              }
+            ],
+            "type": "paragraph",
+            "key": "iSMGr"
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "要将 buffer 传送出去，比如 http response 的 "
+                      },
+                      {
+                        "children": [
+                          {
+                            "text": "write(string: String, encoding)"
+                          }
+                        ],
+                        "type": "inline-code",
+                        "key": "ntGss"
+                      },
+                      {
+                        "text": ""
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "FmfzB"
+                  }
+                ],
+                "type": "list-item",
+                "key": "zfcBh"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "使用 "
+                      },
+                      {
+                        "children": [
+                          {
+                            "text": "Buffer.prototype.toString('base64')"
+                          }
+                        ],
+                        "type": "inline-code",
+                        "key": "RHdPr"
+                      },
+                      {
+                        "text": "将 buffer 变为 string"
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "JDasi"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "text": "将 buffer 中的字节序列根据 base64 编码规则转换为 ascii 字符"
+                              }
+                            ],
+                            "type": "paragraph",
+                            "key": "ZKjEc"
+                          }
+                        ],
+                        "type": "list-item",
+                        "key": "sazzt"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "text": "再构造 string：根据 utf16 编码将 ascii 字符转换为字节序列，生成对应的 string"
+                              }
+                            ],
+                            "type": "paragraph",
+                            "key": "MRnsd"
+                          }
+                        ],
+                        "type": "list-item",
+                        "key": "efHpN"
+                      }
+                    ],
+                    "type": "numbered-list",
+                    "key": "dSwzN"
+                  }
+                ],
+                "type": "list-item",
+                "key": "cTnBS"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "children": [
+                          {
+                            "text": "write"
+                          }
+                        ],
+                        "type": "inline-code",
+                        "key": "yTMzQ"
+                      },
+                      {
+                        "text": " 内部将传入的 string 根据指定 encoding 进行字符编码为 buffer 后送出"
+                      }
+                    ],
+                    "type": "paragraph",
+                    "key": "ZSDjw"
+                  }
+                ],
+                "type": "list-item",
+                "key": "eEtia"
+              }
+            ],
+            "type": "numbered-list",
+            "key": "zHMcN"
+          }
+        ],
+        "type": "list-item",
+        "key": "FXbyw"
+      }
+    ],
+    "type": "bulleted-list",
+    "start": 1,
+    "key": "JSysA"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "rCZHR"
+  },
+  {
+    "children": [
+      {
+        "text": "后语"
+      }
+    ],
+    "type": "heading-two",
+    "key": "SADFm"
+  },
+  {
+    "children": [
+      {
+        "text": "太复杂了，过一个月以后一定会忘得干干净净。。。"
+      }
+    ],
+    "type": "paragraph",
+    "key": "bWbht"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "WWARD"
+  },
+  {
+    "children": [
+      {
+        "text": "扩展阅读"
+      }
+    ],
+    "type": "heading-two",
+    "key": "BwWCX"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "text": "一篇详细的探究 JS string 编码的文章，从 Unicode 到 ECMAScript 规范到 JS 引擎实现"
+          }
+        ],
+        "type": "paragraph",
+        "key": "BRzeh"
+      },
+      {
+        "children": [
+          {
+            "text": " "
+          },
+          {
+            "children": [
+              {
+                "text": "https://mathiasbynens.be/notes/javascript-encoding"
+              }
+            ],
+            "type": "link",
+            "url": "https://mathiasbynens.be/notes/javascript-encoding",
+            "key": "fPFys"
+          },
+          {
+            "text": ""
+          }
+        ],
+        "type": "paragraph",
+        "key": "ysjTE"
+      }
+    ],
+    "type": "block-quote",
+    "key": "Gnkcx"
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "text": "Node 关于 Buffer 字符编码的文档 "
+          },
+          {
+            "children": [
+              {
+                "text": "https://nodejs.org/api/buffer.html#buffers-and-character-encodings"
+              }
+            ],
+            "type": "link",
+            "url": "https://nodejs.org/api/buffer.html#buffers-and-character-encodings",
+            "key": "bsWyy"
+          },
+          {
+            "text": ""
+          }
+        ],
+        "type": "paragraph",
+        "key": "hzGTB"
+      }
+    ],
+    "type": "block-quote",
+    "key": "HBDzM"
+  },
+  {
+    "children": [
+      {
+        "text": ""
+      }
+    ],
+    "type": "paragraph",
+    "key": "WBfGZ"
+  }
+]
