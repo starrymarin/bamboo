@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-// import 'package:tile/tile.dart';
+// import 'package:tile/bamboo.dart';
 
 void main() {
   test('adds one to input values', () {

@@ -37,7 +37,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
 
-  theia_flutter:
+  bamboo:
     path: '..'
 
 dev_dependencies:

@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:bamboo/bamboo.dart';
+import 'package:bamboo/node/node.dart';
 
 void main() {
   runApp(const MyApp());
@@ -67,8 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Theia")),
-      body: Container(),
+      appBar: AppBar(title: const Text("Bamboo")),
+      body: Bamboo(document: document.map((e) => e as NodeJson).toList()),
     );
   }
 }
