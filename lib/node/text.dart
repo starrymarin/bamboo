@@ -30,8 +30,8 @@ class TextNode extends Node implements SpanNode {
   late bool? strikethrough = json[JsonKey.strikethrough];
 
   @override
-  InlineSpan buildSpan(TextKey textKey) {
-    return displayBuilder.buildSpan(textKey);
+  InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
+    return displayBuilder.buildSpan(textBuilderContext);
   }
 
   @override
@@ -42,12 +42,9 @@ class TextNode extends Node implements SpanNode {
 
 class _TextSpanBuilder extends SpanDisplayBuilder<TextNode> {
   @override
-  InlineSpan buildSpan(TextKey textKey) {
-    TextStyle? textStyle;
-    BuildContext? textContext = textKey.currentContext;
-    if (textContext != null) {
-      textStyle = _InheritedTextTheme.maybe(textContext)?.textStyle;
-    }
+  InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
+    TextStyle? textStyle =
+        _InheritedTextTheme.maybe(textBuilderContext.value)?.textStyle;
 
     TextStyle newStyle = TextStyle(
       backgroundColor: node.backgroundColor,
@@ -74,8 +71,8 @@ class _TextSpanBuilder extends SpanDisplayBuilder<TextNode> {
 }
 
 ///
-/// 代理一个[Text]，并为其设置key，然后在适当时传输给[SpanNode.buildSpan]，这意味着
-/// [SpanNode]必须被包含在[BambooText]中，而不能是[Text],[RichText]等
+/// 使用[Builder]构建一个[Text]，并将Builder context传输给[SpanNode.buildSpan]，这意
+/// 味着[SpanNode]必须被包含在[BambooText]中，而不能是[Text],[RichText]等
 ///
 class BambooText extends StatefulWidget {
   const BambooText({
@@ -96,7 +93,8 @@ class BambooText extends StatefulWidget {
     this.selectionColor,
   });
 
-  final InlineSpan Function(TextKey textKey) textSpanBuilder;
+  final InlineSpan Function(TextBuilderContext textBuilderContext)
+      textSpanBuilder;
 
   final TextStyle? style;
 
@@ -129,27 +127,29 @@ class BambooText extends StatefulWidget {
 }
 
 class BambooTextState extends State<BambooText> {
-  // ignore: prefer_const_constructors
-  final TextKey _textKey = TextKey._instance();
-
   @override
   Widget build(BuildContext context) {
-    return Text.rich(
-      widget.textSpanBuilder.call(_textKey),
-      key: _textKey,
-      style: widget.style,
-      strutStyle: widget.strutStyle,
-      textAlign: widget.textAlign,
-      textDirection: widget.textDirection,
-      locale: widget.locale,
-      softWrap: widget.softWrap,
-      overflow: widget.overflow,
-      textScaleFactor: widget.textScaleFactor,
-      maxLines: widget.maxLines,
-      semanticsLabel: widget.semanticsLabel,
-      textWidthBasis: widget.textWidthBasis,
-      textHeightBehavior: widget.textHeightBehavior,
-      selectionColor: widget.selectionColor,
+    return Builder(
+      builder: (BuildContext builderContext) {
+        return Text.rich(
+          widget.textSpanBuilder.call(
+            TextBuilderContext._wrap(builderContext),
+          ),
+          style: widget.style,
+          strutStyle: widget.strutStyle,
+          textAlign: widget.textAlign,
+          textDirection: widget.textDirection,
+          locale: widget.locale,
+          softWrap: widget.softWrap,
+          overflow: widget.overflow,
+          textScaleFactor: widget.textScaleFactor,
+          maxLines: widget.maxLines,
+          semanticsLabel: widget.semanticsLabel,
+          textWidthBasis: widget.textWidthBasis,
+          textHeightBehavior: widget.textHeightBehavior,
+          selectionColor: widget.selectionColor,
+        );
+      },
     );
   }
 }
@@ -205,11 +205,11 @@ class _InheritedTextTheme extends InheritedWidget {
 }
 
 ///
-/// 用于指定[Text.key]的GlobalKey
+/// 包裹Builder的BuildContext，构造方法声明为私有，这限制了[SpanNode.buildSpan]只能
+/// 在[BambooText]中调用
 ///
-/// 需要传输给[SpanNode.buildSpan]，[TextKey._instance]限定了只能在本文件构造，
-/// 不能在外部构造
-///
-class TextKey extends GlobalKey {
-  const TextKey._instance() : super.constructor();
+class TextBuilderContext {
+  const TextBuilderContext._wrap(this.value);
+
+  final BuildContext value;
 }

@@ -49,10 +49,10 @@ class ParagraphWidgetBuilder extends WidgetDisplayBuilder<ParagraphNode> {
           child: BambooTextThemeController(
             textAlign: node.align,
             child: BambooText(
-              textSpanBuilder: (TextKey textKey) {
+              textSpanBuilder: (TextBuilderContext textBuilderContext) {
                 return TextSpan(
                   children: node.children.whereType<SpanNode>().map((spanNode) {
-                    return spanNode.buildSpan(textKey);
+                    return spanNode.buildSpan(textBuilderContext);
                   }).toList(),
                 );
               },

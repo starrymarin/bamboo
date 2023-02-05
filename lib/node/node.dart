@@ -34,7 +34,7 @@ abstract class WidgetNode {
 }
 
 abstract class SpanNode {
-  InlineSpan buildSpan(TextKey textKey);
+  InlineSpan buildSpan(TextBuilderContext textBuilderContext);
 }
 
 abstract class ElementNode extends Node {
@@ -76,8 +76,8 @@ class InlineNode extends ElementNode implements SpanNode {
       super.displayBuilder as SpanDisplayBuilder;
 
   @override
-  InlineSpan buildSpan(TextKey textKey) {
-    return displayBuilder.buildSpan(textKey);
+  InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
+    return displayBuilder.buildSpan(textBuilderContext);
   }
 
   @override
@@ -137,7 +137,7 @@ abstract class WidgetDisplayBuilder<T extends Node> extends DisplayBuilder<T> {
 }
 
 abstract class SpanDisplayBuilder<T extends Node> extends DisplayBuilder<T> {
-  InlineSpan buildSpan(TextKey textKey);
+  InlineSpan buildSpan(TextBuilderContext textBuilderContext);
 }
 
 abstract class NodePlugin {
