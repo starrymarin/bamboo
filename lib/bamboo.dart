@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bamboo/constants.dart';
+import 'package:bamboo/node/internal/inline_code.dart';
 import 'package:flutter/widgets.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/internal/paragraph.dart';
@@ -14,7 +15,9 @@ class Bamboo extends StatefulWidget {
     this.document,
     List<NodePlugin>? nodePlugins,
   }) {
-    this.nodePlugins..[NodeType.paragraph] = ParagraphNodePlugin();
+    this.nodePlugins
+      ..[NodeType.paragraph] = ParagraphNodePlugin()
+      ..[NodeType.inlineCode] = InlineCodeNodePlugin();
     nodePlugins?.forEach((plugin) {
       this.nodePlugins[plugin.type()] = plugin;
     });

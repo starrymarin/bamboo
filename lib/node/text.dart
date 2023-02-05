@@ -43,15 +43,15 @@ class TextNode extends Node implements SpanNode {
 class _TextSpanBuilder extends SpanDisplayBuilder<TextNode> {
   @override
   InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
-    TextStyle? textStyle =
-        _InheritedTextTheme.maybe(textBuilderContext.value)?.textStyle;
+    TextStyle textStyle =
+        BambooTextThemeController.style(textBuilderContext.value);
 
     TextStyle newStyle = TextStyle(
       backgroundColor: node.backgroundColor,
       color: node.color,
       fontSize: node.fontSize,
-      fontWeight: node.bold ?? false ? FontWeight.bold : textStyle?.fontWeight,
-      fontStyle: node.italic ?? false ? FontStyle.italic : textStyle?.fontStyle,
+      fontWeight: node.bold ?? false ? FontWeight.bold : textStyle.fontWeight,
+      fontStyle: node.italic ?? false ? FontStyle.italic : textStyle.fontStyle,
       decoration: TextDecoration.combine([
         node.underlined ?? false
             ? TextDecoration.underline
@@ -62,8 +62,8 @@ class _TextSpanBuilder extends SpanDisplayBuilder<TextNode> {
       ]),
     );
 
-    TextStyle style = textStyle?.merge(newStyle) ?? newStyle;
-    return TextSpan(
+    TextStyle style = textStyle.merge(newStyle);
+    return InheritedStyleTextSpan(
       text: node.text,
       style: style,
     );
@@ -154,16 +154,30 @@ class BambooTextState extends State<BambooText> {
   }
 }
 
+///
+/// 包裹Builder的BuildContext，构造方法声明为私有，这限制了[SpanNode.buildSpan]只能
+/// 在[BambooText]中调用
+///
+class TextBuilderContext {
+  const TextBuilderContext._wrap(this.value);
+
+  final BuildContext value;
+}
+
 class BambooTextThemeController extends StatelessWidget {
   const BambooTextThemeController({
     super.key,
-    this.textStyle,
+    this.textStyle = const TextStyle(),
     this.textAlign,
     this.inherited = true,
     required this.child,
   });
 
-  final TextStyle? textStyle;
+  static TextStyle style(BuildContext context) {
+    return DefaultTextStyle.of(context).style;
+  }
+
+  final TextStyle textStyle;
 
   final TextAlign? textAlign;
 
@@ -173,43 +187,44 @@ class BambooTextThemeController extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TextStyle? finalTextStyle = textStyle;
     if (inherited) {
-      TextStyle? ancestorTextStyle =
-          _InheritedTextTheme.maybe(context)?.textStyle;
-      finalTextStyle = ancestorTextStyle?.merge(textStyle) ?? textStyle;
+      return DefaultTextStyle.merge(
+        child: child,
+        style: textStyle,
+        textAlign: textAlign,
+      );
     }
-    return _InheritedTextTheme(finalTextStyle, textAlign, child);
+    return DefaultTextStyle(
+      style: textStyle,
+      textAlign: textAlign,
+      child: child,
+    );
   }
 }
 
-class _InheritedTextTheme extends InheritedWidget {
-  static _InheritedTextTheme? maybe(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<_InheritedTextTheme>();
+// ignore: must_be_immutable
+class InheritedStyleTextSpan extends TextSpan {
+  InheritedStyleTextSpan({
+    super.text,
+    super.children,
+    TextStyle? style,
+    super.recognizer,
+    super.mouseCursor,
+    super.onEnter,
+    super.onExit,
+    super.semanticsLabel,
+    super.locale,
+    super.spellOut,
+  }) : _textStyle = style {
+    children?.forEach((child) {
+      if (child is InheritedStyleTextSpan) {
+        child._textStyle = child._textStyle?.merge(style);
+      }
+    });
   }
 
-  const _InheritedTextTheme(
-    this.textStyle,
-    this.textAlign,
-    Widget child,
-  ) : super(child: child);
-
-  final TextStyle? textStyle;
-
-  final TextAlign? textAlign;
+  TextStyle? _textStyle;
 
   @override
-  bool updateShouldNotify(covariant _InheritedTextTheme oldWidget) {
-    return oldWidget.textStyle != textStyle || oldWidget.textAlign != textAlign;
-  }
-}
-
-///
-/// 包裹Builder的BuildContext，构造方法声明为私有，这限制了[SpanNode.buildSpan]只能
-/// 在[BambooText]中调用
-///
-class TextBuilderContext {
-  const TextBuilderContext._wrap(this.value);
-
-  final BuildContext value;
+  TextStyle? get style => _textStyle;
 }

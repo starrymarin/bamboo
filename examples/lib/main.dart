@@ -71,6 +71,29 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(title: const Text("Bamboo")),
       body: Bamboo(document: document.map((e) => e as NodeJson).toList()),
+      // body: const DefaultTextStyle(
+      //   style: TextStyle(
+      //     fontSize: 20,
+      //   ),
+      //   child: Text.rich(
+      //     TextSpan(
+      //       children: [
+      //         TextSpan(
+      //           text: "1111",
+      //           style: TextStyle(
+      //             fontSize: 16
+      //           )
+      //         )
+      //       ],
+      //       style: TextStyle(
+      //         height: 3
+      //       )
+      //     ),
+      //     style: TextStyle(
+      //       color: Colors.orange
+      //     ),
+      //   ),
+      // ),
     );
   }
 }
