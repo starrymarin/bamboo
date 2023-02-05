@@ -46,17 +46,15 @@ class ParagraphWidgetBuilder extends WidgetDisplayBuilder<ParagraphNode> {
               style?.inlineTextMargin ?? const EdgeInsets.fromLTRB(0, 8, 0, 8),
           padding: EdgeInsets.fromLTRB(
               (_indentSize * node.indent).toDouble(), 0, 0, 0),
-          child: BambooTextThemeController(
+          child: BambooText(
+            textSpanBuilder: (TextBuilderContext textBuilderContext) {
+              return TextSpan(
+                children: node.children.whereType<SpanNode>().map((spanNode) {
+                  return spanNode.buildSpan(textBuilderContext);
+                }).toList(),
+              );
+            },
             textAlign: node.align,
-            child: BambooText(
-              textSpanBuilder: (TextBuilderContext textBuilderContext) {
-                return TextSpan(
-                  children: node.children.whereType<SpanNode>().map((spanNode) {
-                    return spanNode.buildSpan(textBuilderContext);
-                  }).toList(),
-                );
-              },
-            ),
           ),
         );
       }

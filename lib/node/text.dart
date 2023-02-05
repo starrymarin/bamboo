@@ -43,15 +43,10 @@ class TextNode extends Node implements SpanNode {
 class _TextSpanBuilder extends SpanDisplayBuilder<TextNode> {
   @override
   InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
-    TextStyle textStyle =
-        BambooTextThemeController.style(textBuilderContext.value);
-
-    TextStyle newStyle = TextStyle(
+    TextStyle style = TextStyle(
       backgroundColor: node.backgroundColor,
       color: node.color,
       fontSize: node.fontSize,
-      fontWeight: node.bold ?? false ? FontWeight.bold : textStyle.fontWeight,
-      fontStyle: node.italic ?? false ? FontStyle.italic : textStyle.fontStyle,
       decoration: TextDecoration.combine([
         node.underlined ?? false
             ? TextDecoration.underline
@@ -61,9 +56,13 @@ class _TextSpanBuilder extends SpanDisplayBuilder<TextNode> {
             : TextDecoration.none,
       ]),
     );
-
-    TextStyle style = textStyle.merge(newStyle);
-    return InheritedStyleTextSpan(
+    if (node.bold == true) {
+      style = style.copyWith(fontWeight: FontWeight.bold);
+    }
+    if (node.italic == true) {
+      style = style.copyWith(fontStyle: FontStyle.italic);
+    }
+    return TextSpan(
       text: node.text,
       style: style,
     );
@@ -162,69 +161,4 @@ class TextBuilderContext {
   const TextBuilderContext._wrap(this.value);
 
   final BuildContext value;
-}
-
-class BambooTextThemeController extends StatelessWidget {
-  const BambooTextThemeController({
-    super.key,
-    this.textStyle = const TextStyle(),
-    this.textAlign,
-    this.inherited = true,
-    required this.child,
-  });
-
-  static TextStyle style(BuildContext context) {
-    return DefaultTextStyle.of(context).style;
-  }
-
-  final TextStyle textStyle;
-
-  final TextAlign? textAlign;
-
-  final bool inherited;
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    if (inherited) {
-      return DefaultTextStyle.merge(
-        child: child,
-        style: textStyle,
-        textAlign: textAlign,
-      );
-    }
-    return DefaultTextStyle(
-      style: textStyle,
-      textAlign: textAlign,
-      child: child,
-    );
-  }
-}
-
-// ignore: must_be_immutable
-class InheritedStyleTextSpan extends TextSpan {
-  InheritedStyleTextSpan({
-    super.text,
-    super.children,
-    TextStyle? style,
-    super.recognizer,
-    super.mouseCursor,
-    super.onEnter,
-    super.onExit,
-    super.semanticsLabel,
-    super.locale,
-    super.spellOut,
-  }) : _textStyle = style {
-    children?.forEach((child) {
-      if (child is InheritedStyleTextSpan) {
-        child._textStyle = child._textStyle?.merge(style);
-      }
-    });
-  }
-
-  TextStyle? _textStyle;
-
-  @override
-  TextStyle? get style => _textStyle;
 }

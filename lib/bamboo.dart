@@ -90,8 +90,8 @@ class _Editor extends StatelessWidget {
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-          child: BambooTextThemeController(
-            textStyle: const TextStyle(
+          child: DefaultTextStyle(
+            style: const TextStyle(
               fontSize: defaultFontSize,
               color: Color(0xFF333333),
               height: 1.6,

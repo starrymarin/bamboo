@@ -24,7 +24,7 @@ class InlineCodeSpanBuilder extends SpanDisplayBuilder<InlineCodeNode> {
             alignment: PlaceholderAlignment.baseline,
             child: _InlineCodeEdgeLabel(isLeft: true),
           ),
-          InheritedStyleTextSpan(
+          TextSpan(
             style: const TextStyle(
               fontFamily: monospace,
               color: Color(0xFF666666),
@@ -77,10 +77,7 @@ class _InlineCodeEdgeLabel extends StatelessWidget {
               borderRadius: const BorderRadius.all(Radius.circular(4)),
               color: const Color(0xFFF5F5F5),
             ),
-            child: Text(
-              "",
-              style: BambooTextThemeController.style(context),
-            ),
+            child: const Text(""),
           ),
         ),
       ),
@@ -95,18 +92,18 @@ class InlineCodeWidgetBuilder extends WidgetDisplayBuilder<InlineCodeNode> {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = BambooTextThemeController(
-      textStyle: const TextStyle(
-          fontFamily: monospace, color: Color(0xFF666666), inherit: true),
-      child: BambooText(
-        textSpanBuilder: (textBuilderContext) {
-          return TextSpan(
-            children: node.children.whereType<SpanNode>().map((spanNode) {
-              return spanNode.buildSpan(textBuilderContext);
-            }).toList(),
-          );
-        },
-        maxLines: 1,
+    Widget content = BambooText(
+      textSpanBuilder: (textBuilderContext) {
+        return TextSpan(
+          children: node.children.whereType<SpanNode>().map((spanNode) {
+            return spanNode.buildSpan(textBuilderContext);
+          }).toList(),
+        );
+      },
+      maxLines: 1,
+      style: const TextStyle(
+        fontFamily: monospace,
+        color: Color(0xFF666666),
       ),
     );
     return Container(
