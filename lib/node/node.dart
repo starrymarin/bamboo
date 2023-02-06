@@ -1,6 +1,8 @@
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/text.dart';
+import 'package:collection/collection.dart';
 
 typedef NodeJson = Map<String, dynamic>;
 
@@ -13,20 +15,28 @@ extension NodeJsonExtension on NodeJson {
 abstract class Node with ChangeNotifier {
   Node({
     required this.json,
-    required this.displayBuilder,
+    required this.display,
   }) {
-    displayBuilder.node = this;
+    display.node = this;
   }
 
   final NodeJson json;
 
-  final DisplayBuilder displayBuilder;
+  final NodeDisplay display;
 
   Node? parent;
 
   final List<Node> children = [];
 
+  final Function _deepEquals = const DeepCollectionEquality().equals;
+
   void update();
+
+  bool equals(Object other);
+
+  bool deepChildrenEquals(Node other) {
+    return _deepEquals(children, other.children);
+  }
 }
 
 abstract class WidgetNode {
@@ -40,23 +50,22 @@ abstract class SpanNode {
 abstract class ElementNode extends Node {
   ElementNode({
     required super.json,
-    required super.displayBuilder,
+    required super.display,
   });
 }
 
-class BlockNode extends ElementNode implements WidgetNode {
+abstract class BlockNode extends ElementNode implements WidgetNode {
   BlockNode({
     required super.json,
-    required WidgetDisplayBuilder super.displayBuilder,
+    required WidgetDisplay super.display,
   });
 
   @override
-  WidgetDisplayBuilder get displayBuilder =>
-      super.displayBuilder as WidgetDisplayBuilder;
+  WidgetDisplay get display => super.display as WidgetDisplay;
 
   @override
   Widget build(BuildContext context) {
-    return NodeWidget(node: this, widgetBuilder: displayBuilder);
+    return NodeWidget(node: this, widgetDisplay: display);
   }
 
   @override
@@ -65,19 +74,18 @@ class BlockNode extends ElementNode implements WidgetNode {
   }
 }
 
-class InlineNode extends ElementNode implements SpanNode {
+abstract class InlineNode extends ElementNode implements SpanNode {
   InlineNode({
     required super.json,
-    required SpanDisplayBuilder super.displayBuilder,
+    required SpanDisplay super.display,
   });
 
   @override
-  SpanDisplayBuilder get displayBuilder =>
-      super.displayBuilder as SpanDisplayBuilder;
+  SpanDisplay get display => super.display as SpanDisplay;
 
   @override
   InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
-    return displayBuilder.buildSpan(textBuilderContext);
+    return display.buildSpan(textBuilderContext);
   }
 
   @override
@@ -87,19 +95,19 @@ class InlineNode extends ElementNode implements SpanNode {
 }
 
 ///
-/// [WidgetNode]会被对应到[NodeWidget]，这个widget会使用[WidgetDisplayBuilder]构建真正展示
+/// [WidgetNode]会被对应到[NodeWidget]，这个widget会使用[WidgetDisplay]构建真正展示
 /// 的Widget，而[NodeWidget]的作用是监听[Node.update]，以此重新构建widget
 ///
 class NodeWidget extends StatefulWidget {
   const NodeWidget({
     super.key,
     required this.node,
-    required this.widgetBuilder,
+    required this.widgetDisplay,
   });
 
   final Node node;
 
-  final WidgetDisplayBuilder widgetBuilder;
+  final WidgetDisplay widgetDisplay;
 
   @override
   State<StatefulWidget> createState() => NodeWidgetState();
@@ -114,7 +122,7 @@ class NodeWidgetState extends State<NodeWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.widgetBuilder.build(context);
+    return widget.widgetDisplay.build(context);
   }
 
   void _update() {
@@ -128,16 +136,32 @@ class NodeWidgetState extends State<NodeWidget> {
   }
 }
 
-abstract class DisplayBuilder<T extends Node> {
+abstract class NodeDisplay<T extends Node> {
   late T node;
+
+  @override
+  // ignore: hash_and_equals
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
+      return false;
+    }
+
+    return node == (other as NodeDisplay).node;
+  }
 }
 
-abstract class WidgetDisplayBuilder<T extends Node> extends DisplayBuilder<T> {
+abstract class WidgetDisplay<T extends Node> extends NodeDisplay<T> {
   Widget build(BuildContext context);
 }
 
-abstract class SpanDisplayBuilder<T extends Node> extends DisplayBuilder<T> {
+abstract class SpanDisplay<T extends Node> extends NodeDisplay<T> {
   InlineSpan buildSpan(TextBuilderContext textBuilderContext);
+
+  void paint(
+    RenderParagraph renderParagraph,
+    PaintingContext context,
+    Offset offset,
+  ) {}
 }
 
 abstract class NodePlugin {

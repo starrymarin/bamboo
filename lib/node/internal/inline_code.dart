@@ -2,18 +2,27 @@ import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/text.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 class InlineCodeNode extends InlineNode {
   InlineCodeNode({
     required super.json,
     required this.softWrap,
-  }) : super(displayBuilder: InlineCodeSpanBuilder());
+  }) : super(display: _InlineCodeDisplay());
 
   final bool softWrap;
+
+  @override
+  bool equals(Object other) {
+    if (other is! InlineCodeNode) {
+      return false;
+    }
+    return deepChildrenEquals(other);
+  }
 }
 
-class InlineCodeSpanBuilder extends SpanDisplayBuilder<InlineCodeNode> {
+class _InlineCodeDisplay extends SpanDisplay<InlineCodeNode> {
   @override
   InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
     if (node.softWrap) {
@@ -46,13 +55,26 @@ class InlineCodeSpanBuilder extends SpanDisplayBuilder<InlineCodeNode> {
         alignment: PlaceholderAlignment.baseline,
         child: NodeWidget(
           node: node,
-          widgetBuilder: InlineCodeWidgetBuilder(node: node),
+          widgetDisplay: _InlineCodeWidgetDisplay(node: node),
         ),
       );
     }
   }
+
+  @override
+  void paint(
+    RenderParagraph renderParagraph,
+    PaintingContext context,
+    Offset offset,
+  ) {
+    super.paint(renderParagraph, context, offset);
+  }
 }
 
+///
+/// 为什么要先绘制一个完整的带边框圆角矩形，然后再用[ClipRect]裁剪一半？
+/// 因为截止Flutter 3.7，绘制Container圆角边框，必须保证四边边框粗细颜色等一致
+///
 class _InlineCodeEdgeLabel extends StatelessWidget {
   const _InlineCodeEdgeLabel({required this.isLeft});
 
@@ -64,7 +86,7 @@ class _InlineCodeEdgeLabel extends StatelessWidget {
       fit: BoxFit.fill,
       child: ClipRect(
         child: Align(
-          alignment: isLeft ? Alignment.topLeft : Alignment.topRight,
+          alignment: isLeft ? Alignment.centerLeft : Alignment.centerRight,
           widthFactor: 0.5,
           child: Container(
             padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
@@ -85,21 +107,15 @@ class _InlineCodeEdgeLabel extends StatelessWidget {
   }
 }
 
-class InlineCodeWidgetBuilder extends WidgetDisplayBuilder<InlineCodeNode> {
-  InlineCodeWidgetBuilder({required InlineCodeNode node}) {
+class _InlineCodeWidgetDisplay extends WidgetDisplay<InlineCodeNode> {
+  _InlineCodeWidgetDisplay({required InlineCodeNode node}) {
     super.node = node;
   }
 
   @override
   Widget build(BuildContext context) {
     Widget content = BambooText(
-      textSpanBuilder: (textBuilderContext) {
-        return TextSpan(
-          children: node.children.whereType<SpanNode>().map((spanNode) {
-            return spanNode.buildSpan(textBuilderContext);
-          }).toList(),
-        );
-      },
+      childNodes: node.children,
       maxLines: 1,
       style: const TextStyle(
         fontFamily: monospace,

@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/inline_code.dart';
-import 'package:flutter/widgets.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/internal/paragraph.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/text.dart';
+import 'package:flutter/widgets.dart';
 
 class Bamboo extends StatefulWidget {
   Bamboo({
@@ -32,16 +32,12 @@ class Bamboo extends StatefulWidget {
 }
 
 class _BambooState extends State<Bamboo> {
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const Underlay(),
-        _Editor(
-          document: widget.document,
-          nodePlugins: widget.nodePlugins,
-        ),
-      ],
+    return _Editor(
+      document: widget.document,
+      nodePlugins: widget.nodePlugins,
     );
   }
 }
@@ -124,19 +120,5 @@ class _BambooScrollBehavior extends ScrollBehavior {
       );
     }
     return super.buildOverscrollIndicator(context, child, details);
-  }
-}
-
-class Underlay extends StatefulWidget {
-  const Underlay({super.key});
-
-  @override
-  State<StatefulWidget> createState() => UnderlayState();
-}
-
-class UnderlayState extends State<Underlay> {
-  @override
-  Widget build(BuildContext context) {
-    return Stack();
   }
 }

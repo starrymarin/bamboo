@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/internal/type.dart';
@@ -7,7 +8,7 @@ import 'package:bamboo/node/text.dart';
 class ParagraphNode extends BlockNode {
   ParagraphNode({
     required super.json,
-  }) : super(displayBuilder: ParagraphWidgetBuilder());
+  }) : super(display: ParagraphWidgetDisplay());
 
   late int indent = json[JsonKey.indent] ?? 0;
 
@@ -20,9 +21,19 @@ class ParagraphNode extends BlockNode {
     }
     return null;
   }();
+
+  @override
+  bool equals(Object other) {
+    if (other is! ParagraphNode) {
+      return false;
+    }
+    return indent == other.indent &&
+        align == other.align &&
+        deepChildrenEquals(other);
+  }
 }
 
-class ParagraphWidgetBuilder extends WidgetDisplayBuilder<ParagraphNode> {
+class ParagraphWidgetDisplay extends WidgetDisplay<ParagraphNode> {
   final int _indentSize = 30;
 
   @override
@@ -47,13 +58,7 @@ class ParagraphWidgetBuilder extends WidgetDisplayBuilder<ParagraphNode> {
           padding: EdgeInsets.fromLTRB(
               (_indentSize * node.indent).toDouble(), 0, 0, 0),
           child: BambooText(
-            textSpanBuilder: (TextBuilderContext textBuilderContext) {
-              return TextSpan(
-                children: node.children.whereType<SpanNode>().map((spanNode) {
-                  return spanNode.buildSpan(textBuilderContext);
-                }).toList(),
-              );
-            },
+            childNodes: node.children,
             textAlign: node.align,
           ),
         );
