@@ -60,8 +60,6 @@ class ParagraphWidgetDisplay extends WidgetDisplay<ParagraphNode> {
           child: BambooText(
             childNodes: node.children,
             textAlign: node.align,
-            strutStyle:
-                StrutStyle.fromTextStyle(DefaultTextStyle.of(context).style),
           ),
         );
       }

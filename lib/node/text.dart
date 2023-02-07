@@ -196,7 +196,7 @@ class BambooText extends StatelessWidget {
         child: Text.rich(
           _buildTextSpan(BambooTextBuildContext._wrap(context)),
           style: style,
-          strutStyle: strutStyle ?? strutStyle,
+          strutStyle: strutStyle ?? mergedStrutStyle,
           textAlign: textAlign,
           textDirection: textDirection,
           locale: locale,
