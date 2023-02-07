@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bamboo/constants.dart';
+import 'package:bamboo/node/internal/block_quote.dart';
 import 'package:bamboo/node/internal/inline_code.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/internal/paragraph.dart';
@@ -17,7 +18,8 @@ class Bamboo extends StatefulWidget {
   }) {
     this.nodePlugins
       ..[NodeType.paragraph] = ParagraphNodePlugin()
-      ..[NodeType.inlineCode] = InlineCodeNodePlugin();
+      ..[NodeType.inlineCode] = InlineCodeNodePlugin()
+      ..[NodeType.blockQuote] = BlockQuoteNodePlugin();
     nodePlugins?.forEach((plugin) {
       this.nodePlugins[plugin.type()] = plugin;
     });
@@ -32,7 +34,6 @@ class Bamboo extends StatefulWidget {
 }
 
 class _BambooState extends State<Bamboo> {
-
   @override
   Widget build(BuildContext context) {
     return _Editor(
