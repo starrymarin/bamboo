@@ -87,26 +87,40 @@ class _Editor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<BlockNode> blockNodes = nodes.whereType<BlockNode>().toList();
+
+    Widget content;
+    if (useListView) {
+      content = ListView.builder(
+        itemBuilder: (BuildContext context, int index) {
+          return blockNodes[index].build(context);
+        },
+        itemCount: blockNodes.length,
+      );
+    } else {
+      content = Column(
+        children: blockNodes.map((node) {
+          return Builder(
+            builder: (context) {
+              return node.build(context);
+            },
+          );
+        }).toList(),
+      );
+    }
+
     return ScrollConfiguration(
       behavior: _BambooScrollBehavior(),
       child: Scrollbar(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-            child: DefaultTextStyle(
-              style: const TextStyle(
-                fontSize: defaultFontSize,
-                color: Color(0xFF333333),
-                height: 1.6,
-              ),
-              child: Column(
-                children: nodes.whereType<BlockNode>().map((node) {
-                  return Builder(builder: (context) {
-                    return node.build(context);
-                  });
-                }).toList(growable: false),
-              ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+          child: DefaultTextStyle(
+            style: const TextStyle(
+              fontSize: defaultFontSize,
+              color: Color(0xFF333333),
+              height: 1.6,
             ),
+            child: content,
           ),
         ),
       ),
