@@ -247,9 +247,9 @@ class InlineCodeNodePlugin extends NodePlugin {
   final bool softWrap;
 
   @override
-  Node transform(NodeJson nodeJson) {
+  Node transform(NodeJson json) {
     return InlineCodeNode(
-      json: nodeJson,
+      json: json,
       softWrap: softWrap,
     );
   }

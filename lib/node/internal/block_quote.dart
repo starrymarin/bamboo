@@ -56,7 +56,7 @@ class _BlockQuoteWidgetDisplay extends WidgetDisplay<BlockQuoteNode> {
 
 class BlockQuoteNodePlugin extends NodePlugin {
   @override
-  Node transform(NodeJson nodeJson) => BlockQuoteNode(json: nodeJson);
+  Node transform(NodeJson json) => BlockQuoteNode(json: json);
 
   @override
   String type() => NodeType.blockQuote;

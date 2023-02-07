@@ -5,9 +5,11 @@ import 'package:bamboo/node/internal/block_quote.dart';
 import 'package:bamboo/node/internal/inline_code.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/internal/paragraph.dart';
+import 'package:bamboo/node/internal/table.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/text.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 class Bamboo extends StatefulWidget {
@@ -19,7 +21,10 @@ class Bamboo extends StatefulWidget {
     this.nodePlugins
       ..[NodeType.paragraph] = ParagraphNodePlugin()
       ..[NodeType.inlineCode] = InlineCodeNodePlugin()
-      ..[NodeType.blockQuote] = BlockQuoteNodePlugin();
+      ..[NodeType.blockQuote] = BlockQuoteNodePlugin()
+      ..[NodeType.table] = TableNodePlugin()
+      ..[NodeType.tableRow] = TableRowNodePlugin()
+      ..[NodeType.tableCell] = TableCellNodePlugin();
     nodePlugins?.forEach((plugin) {
       this.nodePlugins[plugin.type()] = plugin;
     });
@@ -84,21 +89,23 @@ class _Editor extends StatelessWidget {
   Widget build(BuildContext context) {
     return ScrollConfiguration(
       behavior: _BambooScrollBehavior(),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-          child: DefaultTextStyle(
-            style: const TextStyle(
-              fontSize: defaultFontSize,
-              color: Color(0xFF333333),
-              height: 1.6,
-            ),
-            child: Column(
-              children: nodes.whereType<BlockNode>().map((node) {
-                return Builder(builder: (context) {
-                  return node.build(context);
-                });
-              }).toList(growable: false),
+      child: Scrollbar(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+            child: DefaultTextStyle(
+              style: const TextStyle(
+                fontSize: defaultFontSize,
+                color: Color(0xFF333333),
+                height: 1.6,
+              ),
+              child: Column(
+                children: nodes.whereType<BlockNode>().map((node) {
+                  return Builder(builder: (context) {
+                    return node.build(context);
+                  });
+                }).toList(growable: false),
+              ),
             ),
           ),
         ),

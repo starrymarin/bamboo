@@ -1,3 +1,4 @@
+import 'package:bamboo/utils/collection.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:bamboo/node/internal/json.dart';
@@ -30,14 +31,12 @@ abstract class Node with ChangeNotifier {
 
   final List<Node> children = [];
 
-  final Function _deepEquals = const DeepCollectionEquality().equals;
-
   void update();
 
   bool equals(Object other);
 
   bool deepChildrenEquals(Node other) {
-    return _deepEquals(children, other.children);
+    return deepEquals(children, other.children);
   }
 }
 
@@ -171,5 +170,5 @@ abstract class SpanDisplay<T extends Node> extends NodeDisplay<T> {
 abstract class NodePlugin {
   String type();
 
-  Node transform(NodeJson nodeJson);
+  Node transform(NodeJson json);
 }

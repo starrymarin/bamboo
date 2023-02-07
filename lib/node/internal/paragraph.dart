@@ -10,9 +10,9 @@ class ParagraphNode extends BlockNode {
     required super.json,
   }) : super(display: ParagraphWidgetDisplay());
 
-  late int indent = json[JsonKey.indent] ?? 0;
+  late final int indent = json[JsonKey.indent] ?? 0;
 
-  late TextAlign? align = () {
+  late final TextAlign? align = () {
     switch (json[JsonKey.align]) {
       case "center":
         return TextAlign.center;
@@ -88,7 +88,7 @@ class ParagraphNodeStyle extends InheritedWidget {
 
 class ParagraphNodePlugin extends NodePlugin {
   @override
-  Node transform(NodeJson nodeJson) => ParagraphNode(json: nodeJson);
+  Node transform(NodeJson json) => ParagraphNode(json: json);
 
   @override
   String type() => NodeType.paragraph;
