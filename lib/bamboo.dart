@@ -87,11 +87,13 @@ class _Editor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ScrollController scrollController = ScrollController();
     List<BlockNode> blockNodes = nodes.whereType<BlockNode>().toList();
 
     Widget content;
     if (useListView) {
       content = ListView.builder(
+        controller: scrollController,
         itemBuilder: (BuildContext context, int index) {
           return blockNodes[index].build(context);
         },
@@ -99,6 +101,7 @@ class _Editor extends StatelessWidget {
       );
     } else {
       content = SingleChildScrollView(
+        controller: scrollController,
         child: Column(
           children: blockNodes.map((node) {
             return Builder(
@@ -110,19 +113,27 @@ class _Editor extends StatelessWidget {
         ),
       );
     }
-
     return ScrollConfiguration(
-      behavior: _BambooScrollBehavior(),
+      behavior: BambooScrollBehavior(),
       child: Scrollbar(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-          child: DefaultTextStyle(
-            style: const TextStyle(
-              fontSize: defaultFontSize,
-              color: Color(0xFF333333),
-              height: 1.6,
+        controller: scrollController,
+        child: Center(
+          child: Container(
+            alignment: Alignment.topCenter,
+            constraints: const BoxConstraints(
+              maxWidth: editorWidth + 8 + 8,
             ),
-            child: content,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+              child: DefaultTextStyle(
+                style: const TextStyle(
+                  fontSize: defaultFontSize,
+                  color: Color(0xFF333333),
+                  height: 1.6,
+                ),
+                child: content,
+              ),
+            ),
           ),
         ),
       ),
@@ -130,19 +141,24 @@ class _Editor extends StatelessWidget {
   }
 }
 
-class _BambooScrollBehavior extends ScrollBehavior {
+class BambooScrollBehavior extends ScrollBehavior {
   @override
   Widget buildOverscrollIndicator(
     BuildContext context,
     Widget child,
     ScrollableDetails details,
   ) {
-    if (Platform.isAndroid) {
+    if (getPlatform(context) == TargetPlatform.android) {
       return StretchingOverscrollIndicator(
         axisDirection: details.direction,
         child: child,
       );
     }
     return super.buildOverscrollIndicator(context, child, details);
+  }
+
+  @override
+  Widget buildScrollbar(BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
   }
 }

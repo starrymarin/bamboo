@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:bamboo/bamboo.dart';
+import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
@@ -34,7 +36,7 @@ class TableNode extends BlockNode {
       if (rows.isNotEmpty) {
         columnsCount = rows.first.cells.length;
       }
-      double columnWidth = 710 / columnsCount;
+      double columnWidth = editorWidth / columnsCount;
       widthList = List.filled(columnsCount, columnWidth);
     }
     return widthList;
@@ -64,14 +66,17 @@ class _TableWidgetDisplay extends WidgetDisplay<TableNode> {
         ),
       );
     }
+    ScrollController scrollController = ScrollController();
     return Center(
       child: Container(
         margin: const EdgeInsets.fromLTRB(0, 30, 0, 0),
         child: ScrollConfiguration(
-          behavior: _TableScrollBehavior(),
+          behavior: BambooScrollBehavior(),
           child: Scrollbar(
+            controller: scrollController,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
+              controller: scrollController,
               child: Container(
                 decoration: const BoxDecoration(
                   border: Border(
@@ -95,23 +100,6 @@ class TableNodePlugin extends NodePlugin {
 
   @override
   String type() => NodeType.table;
-}
-
-class _TableScrollBehavior extends ScrollBehavior {
-  @override
-  Widget buildOverscrollIndicator(
-    BuildContext context,
-    Widget child,
-    ScrollableDetails details,
-  ) {
-    if (Platform.isAndroid) {
-      return StretchingOverscrollIndicator(
-        axisDirection: details.direction,
-        child: child,
-      );
-    }
-    return super.buildOverscrollIndicator(context, child, details);
-  }
 }
 
 class TableRowNode extends BlockNode {
