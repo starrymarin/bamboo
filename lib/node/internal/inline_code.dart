@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/text.dart';
+import 'package:bamboo/utils/key.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -14,6 +17,9 @@ class InlineCodeNode extends InlineNode {
   final bool softWrap;
 
   @override
+  String get key => super.key ?? randomKey();
+
+  @override
   bool equals(Object other) {
     if (other is! InlineCodeNode) {
       return false;
@@ -24,7 +30,7 @@ class InlineCodeNode extends InlineNode {
 
 class _InlineCodeDisplay extends SpanDisplay<InlineCodeNode> {
   @override
-  InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
+  InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
     if (node.softWrap) {
       return TextSpan(
         children: [
@@ -33,13 +39,14 @@ class _InlineCodeDisplay extends SpanDisplay<InlineCodeNode> {
             alignment: PlaceholderAlignment.baseline,
             child: _InlineCodeEdgeLabel(isLeft: true),
           ),
-          TextSpan(
+          _InlineCodeTextSpan(
+            key: node.key,
             style: const TextStyle(
               fontFamily: monospace,
               color: Color(0xFF666666),
             ),
             children: node.children.whereType<SpanNode>().map((spanNode) {
-              return spanNode.buildSpan(textBuilderContext);
+              return spanNode.buildSpan(bambooTextBuildContext);
             }).toList(),
           ),
           const WidgetSpan(
@@ -68,6 +75,103 @@ class _InlineCodeDisplay extends SpanDisplay<InlineCodeNode> {
     Offset offset,
   ) {
     super.paint(renderParagraph, context, offset);
+    int preLength = 0;
+    _InlineCodeTextSpan? textSpan;
+    renderParagraph.text.visitChildren((span) {
+      if (span is _InlineCodeTextSpan && span.key == node.key) {
+        textSpan = span;
+        return false;
+      }
+      if (span is TextSpan) {
+        preLength += span.text?.length ?? 0;
+      } else if (span is PlaceholderSpan) {
+        preLength += 1;
+      } else {
+        throw Exception("unknown span length");
+      }
+      return true;
+    });
+
+    if (textSpan == null) {
+      return;
+    }
+
+    int length = 0;
+    textSpan?.visitChildren((span) {
+      if (span is TextSpan) {
+        length += span.text?.length ?? 0;
+      } else if (span is PlaceholderSpan) {
+        length += 1;
+      } else {
+        throw Exception("unknown span length");
+      }
+      return true;
+    });
+    TextSelection selection = TextSelection(
+      baseOffset: preLength,
+      extentOffset: preLength + length,
+    );
+
+    List<TextBox> boxes = renderParagraph.getBoxesForSelection(selection,
+        boxHeightStyle: BoxHeightStyle.strut);
+    for (TextBox box in boxes) {
+      const inlineVerticalPadding = 2;
+      const lineWidth = 0.5;
+
+      Rect rect = box.toRect().shift(offset);
+      rect = Rect.fromLTRB(
+        rect.left,
+        rect.top - inlineVerticalPadding,
+        rect.right,
+        rect.bottom + inlineVerticalPadding,
+      );
+
+      Paint backgroundPaint = Paint()
+        ..color = const Color(0xFFF5F5F5)
+        ..style = PaintingStyle.fill;
+      context.canvas.drawRect(
+        rect,
+        backgroundPaint,
+      );
+      context.canvas.save();
+
+      Paint strokePaint = Paint()
+        ..color = const Color(0xFFDDDDDD)
+        ..style = PaintingStyle.fill
+        ..strokeWidth = lineWidth;
+      context.canvas.drawLine(
+          Offset(rect.left - lineWidth, rect.top - lineWidth),
+          Offset(rect.right + lineWidth, rect.top - lineWidth),
+          strokePaint,
+      );
+      context.canvas.drawLine(
+        Offset(rect.left - lineWidth, rect.bottom + lineWidth),
+        Offset(rect.right + lineWidth, rect.bottom + lineWidth),
+        strokePaint,
+      );
+      context.canvas.restore();
+    }
+  }
+}
+
+class _InlineCodeTextSpan extends TextSpan {
+  const _InlineCodeTextSpan({required this.key, super.style, super.children});
+
+  final String key;
+
+  @override
+  bool visitChildren(InlineSpanVisitor visitor) {
+    if (!visitor(this)) {
+      return false;
+    }
+    if (children != null) {
+      for (final InlineSpan child in children!) {
+        if (!child.visitChildren(visitor)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
 
@@ -89,8 +193,8 @@ class _InlineCodeEdgeLabel extends StatelessWidget {
           alignment: isLeft ? Alignment.centerLeft : Alignment.centerRight,
           widthFactor: 0.5,
           child: Container(
-            padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
-            margin: const EdgeInsets.fromLTRB(2, 4, 2, 4),
+            padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+            margin: const EdgeInsets.fromLTRB(2, 2, 2, 2),
             decoration: BoxDecoration(
               border: Border.all(
                 color: const Color(0xFFDDDDDD),
@@ -123,9 +227,8 @@ class _InlineCodeWidgetDisplay extends WidgetDisplay<InlineCodeNode> {
       ),
     );
     return Container(
-      padding: const EdgeInsets.fromLTRB(4, 4, 2, 6),
-      // 本来left也应该是2，但不知为何TextField右边总是有大约2的padding
-      margin: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+      padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+      margin: const EdgeInsets.fromLTRB(2, 2, 2, 2),
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFFDDDDDD), width: 0.5),
         borderRadius: const BorderRadius.all(Radius.circular(4)),

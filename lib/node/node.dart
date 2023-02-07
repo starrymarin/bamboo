@@ -26,6 +26,8 @@ abstract class Node with ChangeNotifier {
 
   Node? parent;
 
+  late String? key = json[JsonKey.key];
+
   final List<Node> children = [];
 
   final Function _deepEquals = const DeepCollectionEquality().equals;
@@ -44,7 +46,7 @@ abstract class WidgetNode {
 }
 
 abstract class SpanNode {
-  InlineSpan buildSpan(TextBuilderContext textBuilderContext);
+  InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext);
 }
 
 abstract class ElementNode extends Node {
@@ -84,8 +86,8 @@ abstract class InlineNode extends ElementNode implements SpanNode {
   SpanDisplay get display => super.display as SpanDisplay;
 
   @override
-  InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
-    return display.buildSpan(textBuilderContext);
+  InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
+    return display.buildSpan(bambooTextBuildContext);
   }
 
   @override
@@ -140,7 +142,6 @@ abstract class NodeDisplay<T extends Node> {
   late T node;
 
   @override
-  // ignore: hash_and_equals
   bool operator ==(Object other) {
     if (runtimeType != other.runtimeType) {
       return false;
@@ -148,6 +149,9 @@ abstract class NodeDisplay<T extends Node> {
 
     return node == (other as NodeDisplay).node;
   }
+
+  @override
+  int get hashCode => node.hashCode;
 }
 
 abstract class WidgetDisplay<T extends Node> extends NodeDisplay<T> {
@@ -155,7 +159,7 @@ abstract class WidgetDisplay<T extends Node> extends NodeDisplay<T> {
 }
 
 abstract class SpanDisplay<T extends Node> extends NodeDisplay<T> {
-  InlineSpan buildSpan(TextBuilderContext textBuilderContext);
+  InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext);
 
   void paint(
     RenderParagraph renderParagraph,

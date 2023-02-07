@@ -31,8 +31,8 @@ class TextNode extends Node implements SpanNode {
   late bool? strikethrough = json[JsonKey.strikethrough];
 
   @override
-  InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
-    return display.buildSpan(textBuilderContext);
+  InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
+    return display.buildSpan(bambooTextBuildContext);
   }
 
   @override
@@ -58,7 +58,7 @@ class TextNode extends Node implements SpanNode {
 
 class _TextSpanDisplay extends SpanDisplay<TextNode> {
   @override
-  InlineSpan buildSpan(TextBuilderContext textBuilderContext) {
+  InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
     TextStyle style = TextStyle(
       backgroundColor: node.backgroundColor,
       color: node.color,
@@ -85,11 +85,7 @@ class _TextSpanDisplay extends SpanDisplay<TextNode> {
   }
 }
 
-///
-/// 使用[Builder]构建一个[Text]，并将Builder context传输给[SpanNode.buildSpan]，这意
-/// 味着[SpanNode]必须被包含在[BambooText]中，而不能是[Text],[RichText]等
-///
-class BambooText extends StatefulWidget {
+class BambooText extends StatelessWidget {
   const BambooText({
     super.key,
     required this.childNodes,
@@ -111,7 +107,7 @@ class BambooText extends StatefulWidget {
 
   final List<Node> childNodes;
 
-  final InlineSpan Function(TextBuilderContext textBuilderContext)?
+  final InlineSpan Function(BambooTextBuildContext bambooTextBuildContext)?
       textSpanBuilder;
 
   final TextStyle? style;
@@ -140,59 +136,105 @@ class BambooText extends StatefulWidget {
 
   final Color? selectionColor;
 
-  @override
-  State<StatefulWidget> createState() => BambooTextState();
-}
-
-class BambooTextState extends State<BambooText> {
-  InlineSpan _buildTextSpan(TextBuilderContext textBuilderContext) {
-    if (widget.textSpanBuilder != null) {
-      return widget.textSpanBuilder!.call(textBuilderContext);
+  InlineSpan _buildTextSpan(BambooTextBuildContext bambooTextBuildContext) {
+    if (textSpanBuilder != null) {
+      return textSpanBuilder!.call(bambooTextBuildContext);
     } else {
       return TextSpan(
-        children: widget.childNodes.whereType<SpanNode>().map((spanNode) {
-          return spanNode.buildSpan(textBuilderContext);
+        children: childNodes.whereType<SpanNode>().map((spanNode) {
+          return spanNode.buildSpan(bambooTextBuildContext);
         }).toList(),
       );
     }
   }
 
+  ///
+  /// 首先找到本[BambooText]上层设置的textStyle，如果本[BambooText.style.inherit]为
+  /// true，则与上层的style合并生成新的style，如果为false，则使用本身的style，然后将新
+  /// style保存到[_BambooTextStyle]中，以便下层使用。新style只需要传输给
+  /// [_BambooTextStyle]，不需要传输给[_TextProxy]和[Text]，因为他们的textPainter会
+  /// 默认合并上层的样式，而新style的作用则是生成strutStyle，并将其设置给[_TextProxy]和
+  /// [Text]
+  ///
+  /// 如果[BambooText.strutStyle]不为null，[_TextProxy]和[Text]使用
+  /// [BambooText.strutStyle]，如果为null，则使用新生成的strutStyle，保证Text的
+  /// strutStyle不为空
+  ///
+  /// [Text.strutStyle]不能为空，否则某些样式会出现问题，比如InlineCode
+  ///
   @override
   Widget build(BuildContext context) {
-    return Builder(
-      builder: (BuildContext builderContext) {
-        return _TextProxy(
-          textStyle: widget.style,
-          textAlign: widget.textAlign ?? TextAlign.start,
-          textDirection: widget.textDirection,
-          textScaleFactor: widget.textScaleFactor ?? 1.0,
-          locale: widget.locale,
-          strutStyle: widget.strutStyle,
-          textWidthBasis: widget.textWidthBasis ?? TextWidthBasis.parent,
-          textHeightBehavior: widget.textHeightBehavior,
-          spanDisplays: widget.childNodes
-              .map((node) => node.display)
-              .whereType<SpanDisplay>()
-              .toList(),
-          child: Text.rich(
-            _buildTextSpan(TextBuilderContext._wrap(builderContext)),
-            style: widget.style,
-            strutStyle: widget.strutStyle,
-            textAlign: widget.textAlign,
-            textDirection: widget.textDirection,
-            locale: widget.locale,
-            softWrap: widget.softWrap,
-            overflow: widget.overflow,
-            textScaleFactor: widget.textScaleFactor,
-            maxLines: widget.maxLines,
-            semanticsLabel: widget.semanticsLabel,
-            textWidthBasis: widget.textWidthBasis,
-            textHeightBehavior: widget.textHeightBehavior,
-            selectionColor: widget.selectionColor,
-          ),
-        );
-      },
+    TextStyle ancestorTextStyle = _BambooTextStyle.maybe(context)?.textStyle ??
+        DefaultTextStyle.of(context).style;
+    TextStyle textStyle;
+    if (style == null) {
+      textStyle = ancestorTextStyle;
+    } else {
+      if (style?.inherit == true) {
+        textStyle = style!.merge(ancestorTextStyle);
+      } else {
+        textStyle = style!;
+      }
+    }
+    StrutStyle? mergedStrutStyle = StrutStyle.fromTextStyle(textStyle);
+
+    return _BambooTextStyle(
+      textStyle: textStyle,
+      child: _TextProxy(
+        textStyle: style,
+        textAlign: textAlign ?? TextAlign.start,
+        textDirection: textDirection,
+        textScaleFactor: textScaleFactor ?? 1.0,
+        locale: locale,
+        strutStyle: strutStyle ?? mergedStrutStyle,
+        textWidthBasis: textWidthBasis ?? TextWidthBasis.parent,
+        textHeightBehavior: textHeightBehavior,
+        spanDisplays: childNodes
+            .map((node) => node.display)
+            .whereType<SpanDisplay>()
+            .toList(),
+        child: Text.rich(
+          _buildTextSpan(BambooTextBuildContext._wrap(context)),
+          style: style,
+          strutStyle: strutStyle ?? strutStyle,
+          textAlign: textAlign,
+          textDirection: textDirection,
+          locale: locale,
+          softWrap: softWrap,
+          overflow: overflow,
+          textScaleFactor: textScaleFactor,
+          maxLines: maxLines,
+          semanticsLabel: semanticsLabel,
+          textWidthBasis: textWidthBasis,
+          textHeightBehavior: textHeightBehavior,
+          selectionColor: selectionColor,
+        ),
+      ),
     );
+  }
+}
+
+///
+/// 保存与上层合并之后的textStyle
+///
+class _BambooTextStyle extends InheritedWidget {
+  const _BambooTextStyle({
+    required this.textStyle,
+    required super.child,
+  });
+
+  final TextStyle? textStyle;
+
+  static _BambooTextStyle? maybe(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<_BambooTextStyle>();
+  }
+
+  @override
+  bool updateShouldNotify(covariant InheritedWidget oldWidget) {
+    if (oldWidget is! _BambooTextStyle) {
+      return false;
+    }
+    return textStyle != oldWidget.textStyle;
   }
 }
 
@@ -383,11 +425,11 @@ class _RenderParagraphProxy extends RenderProxyBox {
 }
 
 ///
-/// 包裹Builder的BuildContext，构造方法声明为私有，这限制了[SpanNode.buildSpan]只能
-/// 在[BambooText]中调用
+/// 对[BambooText.build]context的封装，构造方法声明为私有，这限制了[SpanNode.buildSpan]
+/// 只能在[BambooText]中调用
 ///
-class TextBuilderContext {
-  TextBuilderContext._wrap(BuildContext value)
+class BambooTextBuildContext {
+  BambooTextBuildContext._wrap(BuildContext value)
       : _weakValue = WeakReference(value);
 
   final WeakReference<BuildContext> _weakValue;
