@@ -98,14 +98,16 @@ class _Editor extends StatelessWidget {
         itemCount: blockNodes.length,
       );
     } else {
-      content = Column(
-        children: blockNodes.map((node) {
-          return Builder(
-            builder: (context) {
-              return node.build(context);
-            },
-          );
-        }).toList(),
+      content = SingleChildScrollView(
+        child: Column(
+          children: blockNodes.map((node) {
+            return Builder(
+              builder: (context) {
+                return node.build(context);
+              },
+            );
+          }).toList(),
+        ),
       );
     }
 
