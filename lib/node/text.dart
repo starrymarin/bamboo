@@ -9,7 +9,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 class TextNode extends Node implements SpanNode {
-  TextNode({required super.json}) : super(render: _TextSpanRender());
+  TextNode({required super.json});
 
   @override
   SpanRender get render => super.render as SpanRender;
@@ -37,6 +37,9 @@ class TextNode extends Node implements SpanNode {
   }
 
   @override
+  NodeRender<Node> createRender() => _TextSpanRender(node: this);
+
+  @override
   void update() {
     parent?.update();
   }
@@ -58,6 +61,8 @@ class TextNode extends Node implements SpanNode {
 }
 
 class _TextSpanRender extends SpanRender<TextNode> {
+  _TextSpanRender({required super.node});
+
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
     TextStyle style = TextStyle(
@@ -84,6 +89,19 @@ class _TextSpanRender extends SpanRender<TextNode> {
       style: style,
     );
   }
+}
+
+///
+/// 对[BambooText.build]context的封装，构造方法声明为私有，这限制了[SpanNode.buildSpan]
+/// 只能在[BambooText]中调用
+///
+class BambooTextBuildContext {
+  BambooTextBuildContext._wrap(BuildContext value)
+      : _weakValue = WeakReference(value);
+
+  final WeakReference<BuildContext> _weakValue;
+
+  BuildContext? get value => _weakValue.target;
 }
 
 class BambooText extends StatelessWidget {
@@ -423,17 +441,4 @@ class _RenderParagraphProxy extends RenderProxyBox {
     }
     super.paint(context, offset);
   }
-}
-
-///
-/// 对[BambooText.build]context的封装，构造方法声明为私有，这限制了[SpanNode.buildSpan]
-/// 只能在[BambooText]中调用
-///
-class BambooTextBuildContext {
-  BambooTextBuildContext._wrap(BuildContext value)
-      : _weakValue = WeakReference(value);
-
-  final WeakReference<BuildContext> _weakValue;
-
-  BuildContext? get value => _weakValue.target;
 }

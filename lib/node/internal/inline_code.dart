@@ -13,12 +13,15 @@ class InlineCodeNode extends InlineNode {
   InlineCodeNode({
     required super.json,
     required this.softWrap,
-  }) : super(render: _InlineCodeRender());
+  });
 
   final bool softWrap;
 
   @override
   String get key => super.key ?? randomKey();
+
+  @override
+  SpanRender<Node> createRender() => _InlineCodeRender(node: this);
 
   @override
   bool equals(Object other) {
@@ -30,6 +33,8 @@ class InlineCodeNode extends InlineNode {
 }
 
 class _InlineCodeRender extends SpanRender<InlineCodeNode> {
+  _InlineCodeRender({required super.node});
+
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
     if (node.softWrap) {
@@ -213,9 +218,7 @@ class _InlineCodeEdgeLabel extends StatelessWidget {
 }
 
 class _InlineCodeWidgetRender extends WidgetRender<InlineCodeNode> {
-  _InlineCodeWidgetRender({required InlineCodeNode node}) {
-    super.node = node;
-  }
+  _InlineCodeWidgetRender({required super.node});
 
   @override
   Widget build(BuildContext context) {

@@ -13,22 +13,21 @@ extension NodeJsonExtension on NodeJson {
 }
 
 abstract class Node with ChangeNotifier {
-  Node({
-    required this.json,
-    required this.render,
-  }) {
-    render.node = this;
-  }
+  Node({required this.json});
 
   final NodeJson json;
-
-  final NodeRender render;
 
   Node? parent;
 
   late String? key = json[JsonKey.key];
 
   final List<Node> children = [];
+
+  late final NodeRender render = () {
+    return createRender();
+  }();
+
+  NodeRender createRender();
 
   void update();
 
@@ -48,20 +47,17 @@ abstract class SpanNode {
 }
 
 abstract class ElementNode extends Node {
-  ElementNode({
-    required super.json,
-    required super.render,
-  });
+  ElementNode({required super.json});
 }
 
 abstract class BlockNode extends ElementNode implements WidgetNode {
-  BlockNode({
-    required super.json,
-    required WidgetRender super.render,
-  });
+  BlockNode({required super.json});
 
   @override
   WidgetRender get render => super.render as WidgetRender;
+
+  @override
+  WidgetRender createRender();
 
   @override
   Widget build(BuildContext context) {
@@ -75,13 +71,13 @@ abstract class BlockNode extends ElementNode implements WidgetNode {
 }
 
 abstract class InlineNode extends ElementNode implements SpanNode {
-  InlineNode({
-    required super.json,
-    required SpanRender super.render,
-  });
+  InlineNode({required super.json});
 
   @override
   SpanRender get render => super.render as SpanRender;
+
+  @override
+  SpanRender createRender();
 
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {

@@ -7,7 +7,7 @@ import 'package:bamboo/node/internal/table.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/text.dart';
-import 'package:bamboo/widgets/keep_alive_wrapper.dart';
+import 'package:bamboo/widgets/keep_alive.dart';
 import 'package:flutter/material.dart';
 
 class Bamboo extends StatefulWidget {

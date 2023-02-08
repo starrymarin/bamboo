@@ -8,7 +8,7 @@ import 'package:bamboo/node/text.dart';
 class ParagraphNode extends BlockNode {
   ParagraphNode({
     required super.json,
-  }) : super(render: ParagraphWidgetRender());
+  });
 
   late final int indent = json[JsonKey.indent] ?? 0;
 
@@ -23,6 +23,9 @@ class ParagraphNode extends BlockNode {
   }();
 
   @override
+  WidgetRender<Node> createRender() => ParagraphWidgetRender(node: this);
+
+  @override
   bool equals(Object other) {
     if (other is! ParagraphNode) {
       return false;
@@ -34,6 +37,8 @@ class ParagraphNode extends BlockNode {
 }
 
 class ParagraphWidgetRender extends WidgetRender<ParagraphNode> {
+  ParagraphWidgetRender({required super.node});
+
   final int _indentSize = 30;
 
   @override

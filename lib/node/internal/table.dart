@@ -9,7 +9,7 @@ import 'package:bamboo/utils/color.dart';
 import 'package:flutter/material.dart';
 
 class TableNode extends BlockNode {
-  TableNode({required super.json}) : super(render: _TableWidgetRender());
+  TableNode({required super.json});
 
   late final List<TableRowNode> rows = () {
     return children.whereType<TableRowNode>().map((rowNode) {
@@ -42,6 +42,9 @@ class TableNode extends BlockNode {
   }();
 
   @override
+  WidgetRender<Node> createRender() => _TableWidgetRender(node: this);
+
+  @override
   bool equals(Object other) {
     if (other is! TableNode) {
       return false;
@@ -52,6 +55,8 @@ class TableNode extends BlockNode {
 }
 
 class _TableWidgetRender extends WidgetRender<TableNode> {
+  _TableWidgetRender({required super.node});
+
   @override
   Widget build(BuildContext context) {
     List<Widget> rowWidgets = [];
@@ -102,14 +107,16 @@ class TableNodePlugin extends NodePlugin {
 }
 
 class TableRowNode extends BlockNode {
-  TableRowNode({required super.json})
-      : super(render: _TableRowWidgetRender());
+  TableRowNode({required super.json});
 
   late TableNode tableNode;
 
   late final List<TableCellNode> cells = () {
     return children.whereType<TableCellNode>().toList();
   }();
+
+  @override
+  WidgetRender<Node> createRender() => _TableRowWidgetRender(node: this);
 
   @override
   bool equals(Object other) {
@@ -121,6 +128,8 @@ class TableRowNode extends BlockNode {
 }
 
 class _TableRowWidgetRender extends WidgetRender<TableRowNode> {
+  _TableRowWidgetRender({required super.node});
+
   @override
   Widget build(BuildContext context) {
     List<Widget> cellWidgets = [];
@@ -163,8 +172,10 @@ class TableRowNodePlugin extends NodePlugin {
 }
 
 class TableCellNode extends BlockNode {
-  TableCellNode({required super.json})
-      : super(render: _TableCellWidgetRender());
+  TableCellNode({required super.json});
+
+  @override
+  WidgetRender<Node> createRender() => _TableCellWidgetRender(node: this);
 
   @override
   bool equals(Object other) {
@@ -176,6 +187,8 @@ class TableCellNode extends BlockNode {
 }
 
 class _TableCellWidgetRender extends WidgetRender<TableCellNode> {
+  _TableCellWidgetRender({required super.node});
+
   @override
   Widget build(BuildContext context) {
     List<Widget> childrenWidgets = [];

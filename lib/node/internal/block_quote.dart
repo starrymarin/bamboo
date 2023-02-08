@@ -8,9 +8,10 @@ import 'package:flutter/widgets.dart';
 /// 目前认为block-quote里面只有blockNode，如果出现非BlockNode将会被忽略
 ///
 class BlockQuoteNode extends BlockNode {
-  BlockQuoteNode({
-    required super.json,
-  }) : super(render: _BlockQuoteWidgetRender());
+  BlockQuoteNode({required super.json});
+
+  @override
+  WidgetRender<Node> createRender() => _BlockQuoteWidgetRender(node: this);
 
   @override
   bool equals(Object other) {
@@ -22,6 +23,8 @@ class BlockQuoteNode extends BlockNode {
 }
 
 class _BlockQuoteWidgetRender extends WidgetRender<BlockQuoteNode> {
+  _BlockQuoteWidgetRender({required super.node});
+
   @override
   Widget build(BuildContext context) {
     List<Widget> childrenWidgets = [];
