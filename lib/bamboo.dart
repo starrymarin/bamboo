@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/block_quote.dart';
 import 'package:bamboo/node/internal/inline_code.dart';
@@ -9,8 +7,8 @@ import 'package:bamboo/node/internal/table.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/text.dart';
+import 'package:bamboo/widgets/keep_alive_wrapper.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class Bamboo extends StatefulWidget {
   Bamboo({
@@ -95,7 +93,9 @@ class _Editor extends StatelessWidget {
       content = ListView.builder(
         controller: scrollController,
         itemBuilder: (BuildContext context, int index) {
-          return blockNodes[index].build(context);
+          return KeepAliveWrapper(
+            child: blockNodes[index].build(context),
+          );
         },
         itemCount: blockNodes.length,
       );
@@ -158,7 +158,8 @@ class BambooScrollBehavior extends ScrollBehavior {
   }
 
   @override
-  Widget buildScrollbar(BuildContext context, Widget child, ScrollableDetails details) {
+  Widget buildScrollbar(
+      BuildContext context, Widget child, ScrollableDetails details) {
     return child;
   }
 }
