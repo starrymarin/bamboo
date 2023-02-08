@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:bamboo/node/render.dart';
 import 'package:flutter/widgets.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/internal/type.dart';
@@ -8,7 +8,7 @@ import 'package:bamboo/node/text.dart';
 class ParagraphNode extends BlockNode {
   ParagraphNode({
     required super.json,
-  }) : super(display: ParagraphWidgetDisplay());
+  }) : super(render: ParagraphWidgetRender());
 
   late final int indent = json[JsonKey.indent] ?? 0;
 
@@ -33,7 +33,7 @@ class ParagraphNode extends BlockNode {
   }
 }
 
-class ParagraphWidgetDisplay extends WidgetDisplay<ParagraphNode> {
+class ParagraphWidgetRender extends WidgetRender<ParagraphNode> {
   final int _indentSize = 30;
 
   @override

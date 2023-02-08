@@ -3,12 +3,13 @@ import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
+import 'package:bamboo/node/render.dart';
 import 'package:bamboo/utils/collection.dart';
 import 'package:bamboo/utils/color.dart';
 import 'package:flutter/material.dart';
 
 class TableNode extends BlockNode {
-  TableNode({required super.json}) : super(display: _TableWidgetDisplay());
+  TableNode({required super.json}) : super(render: _TableWidgetRender());
 
   late final List<TableRowNode> rows = () {
     return children.whereType<TableRowNode>().map((rowNode) {
@@ -50,7 +51,7 @@ class TableNode extends BlockNode {
   }
 }
 
-class _TableWidgetDisplay extends WidgetDisplay<TableNode> {
+class _TableWidgetRender extends WidgetRender<TableNode> {
   @override
   Widget build(BuildContext context) {
     List<Widget> rowWidgets = [];
@@ -102,7 +103,7 @@ class TableNodePlugin extends NodePlugin {
 
 class TableRowNode extends BlockNode {
   TableRowNode({required super.json})
-      : super(display: _TableRowWidgetDisplay());
+      : super(render: _TableRowWidgetRender());
 
   late TableNode tableNode;
 
@@ -119,7 +120,7 @@ class TableRowNode extends BlockNode {
   }
 }
 
-class _TableRowWidgetDisplay extends WidgetDisplay<TableRowNode> {
+class _TableRowWidgetRender extends WidgetRender<TableRowNode> {
   @override
   Widget build(BuildContext context) {
     List<Widget> cellWidgets = [];
@@ -163,7 +164,7 @@ class TableRowNodePlugin extends NodePlugin {
 
 class TableCellNode extends BlockNode {
   TableCellNode({required super.json})
-      : super(display: _TableCellWidgetDisplay());
+      : super(render: _TableCellWidgetRender());
 
   @override
   bool equals(Object other) {
@@ -174,7 +175,7 @@ class TableCellNode extends BlockNode {
   }
 }
 
-class _TableCellWidgetDisplay extends WidgetDisplay<TableCellNode> {
+class _TableCellWidgetRender extends WidgetRender<TableCellNode> {
   @override
   Widget build(BuildContext context) {
     List<Widget> childrenWidgets = [];

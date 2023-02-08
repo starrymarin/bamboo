@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
+import 'package:bamboo/node/render.dart';
 import 'package:bamboo/node/text.dart';
 import 'package:bamboo/utils/key.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,7 @@ class InlineCodeNode extends InlineNode {
   InlineCodeNode({
     required super.json,
     required this.softWrap,
-  }) : super(display: _InlineCodeDisplay());
+  }) : super(render: _InlineCodeRender());
 
   final bool softWrap;
 
@@ -28,7 +29,7 @@ class InlineCodeNode extends InlineNode {
   }
 }
 
-class _InlineCodeDisplay extends SpanDisplay<InlineCodeNode> {
+class _InlineCodeRender extends SpanRender<InlineCodeNode> {
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
     if (node.softWrap) {
@@ -62,7 +63,7 @@ class _InlineCodeDisplay extends SpanDisplay<InlineCodeNode> {
         alignment: PlaceholderAlignment.baseline,
         child: NodeWidget(
           node: node,
-          widgetDisplay: _InlineCodeWidgetDisplay(node: node),
+          widgetRender: _InlineCodeWidgetRender(node: node),
         ),
       );
     }
@@ -211,8 +212,8 @@ class _InlineCodeEdgeLabel extends StatelessWidget {
   }
 }
 
-class _InlineCodeWidgetDisplay extends WidgetDisplay<InlineCodeNode> {
-  _InlineCodeWidgetDisplay({required InlineCodeNode node}) {
+class _InlineCodeWidgetRender extends WidgetRender<InlineCodeNode> {
+  _InlineCodeWidgetRender({required InlineCodeNode node}) {
     super.node = node;
   }
 

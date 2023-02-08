@@ -1,6 +1,7 @@
 import 'dart:ui' as ui show TextHeightBehavior;
 
 import 'package:bamboo/node/internal/json.dart';
+import 'package:bamboo/node/render.dart';
 import 'package:bamboo/utils/color.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:flutter/foundation.dart';
@@ -8,10 +9,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 class TextNode extends Node implements SpanNode {
-  TextNode({required super.json}) : super(display: _TextSpanDisplay());
+  TextNode({required super.json}) : super(render: _TextSpanRender());
 
   @override
-  SpanDisplay get display => super.display as SpanDisplay;
+  SpanRender get render => super.render as SpanRender;
 
   late String text = json[JsonKey.text] ?? "";
 
@@ -32,7 +33,7 @@ class TextNode extends Node implements SpanNode {
 
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
-    return display.buildSpan(bambooTextBuildContext);
+    return render.buildSpan(bambooTextBuildContext);
   }
 
   @override
@@ -56,7 +57,7 @@ class TextNode extends Node implements SpanNode {
   }
 }
 
-class _TextSpanDisplay extends SpanDisplay<TextNode> {
+class _TextSpanRender extends SpanRender<TextNode> {
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
     TextStyle style = TextStyle(
@@ -189,9 +190,9 @@ class BambooText extends StatelessWidget {
         strutStyle: strutStyle ?? mergedStrutStyle,
         textWidthBasis: textWidthBasis ?? TextWidthBasis.parent,
         textHeightBehavior: textHeightBehavior,
-        spanDisplays: childNodes
-            .map((node) => node.display)
-            .whereType<SpanDisplay>()
+        spanRenders: childNodes
+            .map((node) => node.render)
+            .whereType<SpanRender>()
             .toList(),
         child: Text.rich(
           _buildTextSpan(BambooTextBuildContext._wrap(context)),
@@ -249,7 +250,7 @@ class _TextProxy extends SingleChildRenderObjectWidget {
     this.strutStyle,
     this.textWidthBasis = TextWidthBasis.parent,
     this.textHeightBehavior,
-    required this.spanDisplays,
+    required this.spanRenders,
   });
 
   final TextStyle? textStyle;
@@ -268,7 +269,7 @@ class _TextProxy extends SingleChildRenderObjectWidget {
 
   final TextHeightBehavior? textHeightBehavior;
 
-  final List<SpanDisplay> spanDisplays;
+  final List<SpanRender> spanRenders;
 
   @override
   Text get child => super.child! as Text;
@@ -284,7 +285,7 @@ class _TextProxy extends SingleChildRenderObjectWidget {
       locale: locale ?? Localizations.maybeLocaleOf(context),
       textWidthBasis: textWidthBasis,
       textHeightBehavior: textHeightBehavior,
-      spanDisplays: spanDisplays,
+      spanRenders: spanRenders,
     );
   }
 
@@ -300,7 +301,7 @@ class _TextProxy extends SingleChildRenderObjectWidget {
       ..strutStyle = strutStyle
       ..textWidthBasis = textWidthBasis
       ..textHeightBehavior = textHeightBehavior
-      ..spanDisplays = spanDisplays;
+      ..spanRenders = spanRenders;
   }
 }
 
@@ -314,8 +315,8 @@ class _RenderParagraphProxy extends RenderProxyBox {
     Locale? locale,
     TextWidthBasis textWidthBasis = TextWidthBasis.parent,
     TextHeightBehavior? textHeightBehavior,
-    required List<SpanDisplay> spanDisplays,
-  })  : _spanDisplays = spanDisplays,
+    required List<SpanRender> spanRenders,
+  })  : _spanRenders = spanRenders,
         _prototypePainter = TextPainter(
           text: TextSpan(text: ' ', style: textStyle),
           textAlign: textAlign,
@@ -329,7 +330,7 @@ class _RenderParagraphProxy extends RenderProxyBox {
 
   final TextPainter _prototypePainter;
 
-  List<SpanDisplay> _spanDisplays;
+  List<SpanRender> _spanRenders;
 
   set textStyle(TextStyle? value) {
     if (_prototypePainter.text!.style == value) {
@@ -395,13 +396,13 @@ class _RenderParagraphProxy extends RenderProxyBox {
     markNeedsLayout();
   }
 
-  /// 如果[_spanDisplays]有变化，说明node有变化，那么[child]会markNeedsLayout
-  /// 或markNeedsPaint，[_spanDisplays]不关心layout，所以只需markNeedsPaint
-  set spanDisplays(List<SpanDisplay> value) {
-    if (listEquals(_spanDisplays, value)) {
+  /// 如果[_spanRenders]有变化，说明node有变化，那么[child]会markNeedsLayout
+  /// 或markNeedsPaint，[_spanRenders]不关心layout，所以只需markNeedsPaint
+  set spanRenders(List<SpanRender> value) {
+    if (listEquals(_spanRenders, value)) {
       return;
     }
-    _spanDisplays = value;
+    _spanRenders = value;
     markNeedsPaint();
   }
 
@@ -417,8 +418,8 @@ class _RenderParagraphProxy extends RenderProxyBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    for (SpanDisplay spanDisplay in _spanDisplays) {
-      spanDisplay.paint(child, context, offset);
+    for (SpanRender spanRender in _spanRenders) {
+      spanRender.paint(child, context, offset);
     }
     super.paint(context, offset);
   }
