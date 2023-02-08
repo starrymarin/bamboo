@@ -4,7 +4,7 @@ import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/render.dart';
-import 'package:bamboo/node/text.dart';
+import 'package:bamboo/text/bamboo_text.dart';
 import 'package:bamboo/utils/key.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
