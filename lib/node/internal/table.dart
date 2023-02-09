@@ -6,6 +6,7 @@ import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/render.dart';
 import 'package:bamboo/utils/collection.dart';
 import 'package:bamboo/utils/color.dart';
+import 'package:bamboo/widgets/scroll.dart';
 import 'package:flutter/material.dart';
 
 class TableNode extends BlockNode {

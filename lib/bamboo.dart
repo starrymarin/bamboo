@@ -8,6 +8,7 @@ import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/text.dart';
 import 'package:bamboo/widgets/keep_alive.dart';
+import 'package:bamboo/widgets/scroll.dart';
 import 'package:flutter/material.dart';
 
 class Bamboo extends StatefulWidget {
@@ -15,6 +16,7 @@ class Bamboo extends StatefulWidget {
     super.key,
     this.document,
     List<NodePlugin>? nodePlugins,
+    this.readOnly = true,
   }) {
     this.nodePlugins
       ..[NodeType.paragraph] = ParagraphNodePlugin()
@@ -32,6 +34,8 @@ class Bamboo extends StatefulWidget {
 
   final Map<String, NodePlugin> nodePlugins = {};
 
+  final bool readOnly;
+
   @override
   State<StatefulWidget> createState() => _BambooState();
 }
@@ -39,9 +43,12 @@ class Bamboo extends StatefulWidget {
 class _BambooState extends State<Bamboo> {
   @override
   Widget build(BuildContext context) {
-    return _Editor(
-      document: widget.document,
-      nodePlugins: widget.nodePlugins,
+    return BambooConfiguration(
+      readOnly: widget.readOnly,
+      child: _Editor(
+        document: widget.document,
+        nodePlugins: widget.nodePlugins,
+      ),
     );
   }
 }
@@ -141,25 +148,22 @@ class _Editor extends StatelessWidget {
   }
 }
 
-class BambooScrollBehavior extends ScrollBehavior {
-  @override
-  Widget buildOverscrollIndicator(
-    BuildContext context,
-    Widget child,
-    ScrollableDetails details,
-  ) {
-    if (getPlatform(context) == TargetPlatform.android) {
-      return StretchingOverscrollIndicator(
-        axisDirection: details.direction,
-        child: child,
-      );
-    }
-    return super.buildOverscrollIndicator(context, child, details);
+class BambooConfiguration extends InheritedWidget {
+  const BambooConfiguration({
+    super.key,
+    required super.child,
+    required this.readOnly,
+  });
+
+  final bool readOnly;
+
+  static BambooConfiguration of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<BambooConfiguration>()!;
   }
 
   @override
-  Widget buildScrollbar(
-      BuildContext context, Widget child, ScrollableDetails details) {
-    return child;
+  bool updateShouldNotify(covariant BambooConfiguration oldWidget) {
+    return readOnly == oldWidget.readOnly;
   }
+
 }

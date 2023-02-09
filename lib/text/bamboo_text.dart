@@ -1,8 +1,10 @@
+import 'dart:collection';
 import 'dart:ui' as ui show TextHeightBehavior;
 
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/render.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -10,16 +12,20 @@ import 'package:flutter/widgets.dart';
 /// 对[BambooText.build]context的封装，构造方法声明为私有，这限制了[SpanNode.buildSpan]
 /// 只能在[BambooText]中调用
 ///
+/// 使用[value]构建的InlineSpan一定在[BambooText]内部，[BambooText]销毁时会一并销毁，
+/// 所以无需担心[BuildContext]泄露的问题
+///
 class BambooTextBuildContext {
-  BambooTextBuildContext._wrap(BuildContext value)
-      : _weakValue = WeakReference(value);
+  BambooTextBuildContext._wrap(this.value);
 
-  final WeakReference<BuildContext> _weakValue;
+  final BuildContext value;
 
-  BuildContext? get value => _weakValue.target;
+  BambooTextState state() {
+    return (value as StatefulElement).state as BambooTextState;
+  }
 }
 
-class BambooText extends StatelessWidget {
+class BambooText extends StatefulWidget {
   const BambooText({
     super.key,
     required this.childNodes,
@@ -42,7 +48,7 @@ class BambooText extends StatelessWidget {
   final List<Node> childNodes;
 
   final InlineSpan Function(BambooTextBuildContext bambooTextBuildContext)?
-  textSpanBuilder;
+      textSpanBuilder;
 
   final TextStyle? style;
 
@@ -70,16 +76,28 @@ class BambooText extends StatelessWidget {
 
   final Color? selectionColor;
 
+  @override
+  State<StatefulWidget> createState() => BambooTextState();
+}
+
+class BambooTextState extends State<BambooText> {
+  final HashSet<GestureRecognizer> bambooTextSpanGestureRecognizers =
+      HashSet.identity();
+
   InlineSpan _buildTextSpan(BambooTextBuildContext bambooTextBuildContext) {
-    if (textSpanBuilder != null) {
-      return textSpanBuilder!.call(bambooTextBuildContext);
+    if (widget.textSpanBuilder != null) {
+      return widget.textSpanBuilder!.call(bambooTextBuildContext);
     } else {
       return TextSpan(
-        children: childNodes.whereType<SpanNode>().map((spanNode) {
+        children: widget.childNodes.whereType<SpanNode>().map((spanNode) {
           return spanNode.buildSpan(bambooTextBuildContext);
         }).toList(),
       );
     }
+  }
+
+  void registerBambooTextSpanGestureRecognizer(GestureRecognizer recognizer) {
+    bambooTextSpanGestureRecognizers.add(recognizer);
   }
 
   ///
@@ -101,13 +119,13 @@ class BambooText extends StatelessWidget {
     TextStyle ancestorTextStyle = _BambooTextStyle.maybe(context)?.textStyle ??
         DefaultTextStyle.of(context).style;
     TextStyle textStyle;
-    if (style == null) {
+    if (widget.style == null) {
       textStyle = ancestorTextStyle;
     } else {
-      if (style?.inherit == true) {
-        textStyle = style!.merge(ancestorTextStyle);
+      if (widget.style?.inherit == true) {
+        textStyle = widget.style!.merge(ancestorTextStyle);
       } else {
-        textStyle = style!;
+        textStyle = widget.style!;
       }
     }
     StrutStyle? mergedStrutStyle = StrutStyle.fromTextStyle(textStyle);
@@ -115,36 +133,44 @@ class BambooText extends StatelessWidget {
     return _BambooTextStyle(
       textStyle: textStyle,
       child: _TextProxy(
-        textStyle: style,
-        textAlign: textAlign ?? TextAlign.start,
-        textDirection: textDirection,
-        textScaleFactor: textScaleFactor ?? 1.0,
-        locale: locale,
-        strutStyle: strutStyle ?? mergedStrutStyle,
-        textWidthBasis: textWidthBasis ?? TextWidthBasis.parent,
-        textHeightBehavior: textHeightBehavior,
-        spanRenders: childNodes
+        textStyle: widget.style,
+        textAlign: widget.textAlign ?? TextAlign.start,
+        textDirection: widget.textDirection,
+        textScaleFactor: widget.textScaleFactor ?? 1.0,
+        locale: widget.locale,
+        strutStyle: widget.strutStyle ?? mergedStrutStyle,
+        textWidthBasis: widget.textWidthBasis ?? TextWidthBasis.parent,
+        textHeightBehavior: widget.textHeightBehavior,
+        spanRenders: widget.childNodes
             .map((node) => node.render)
             .whereType<SpanRender>()
             .toList(),
         child: Text.rich(
           _buildTextSpan(BambooTextBuildContext._wrap(context)),
-          style: style,
-          strutStyle: strutStyle ?? mergedStrutStyle,
-          textAlign: textAlign,
-          textDirection: textDirection,
-          locale: locale,
-          softWrap: softWrap,
-          overflow: overflow,
-          textScaleFactor: textScaleFactor,
-          maxLines: maxLines,
-          semanticsLabel: semanticsLabel,
-          textWidthBasis: textWidthBasis,
-          textHeightBehavior: textHeightBehavior,
-          selectionColor: selectionColor,
+          style: widget.style,
+          strutStyle: widget.strutStyle ?? mergedStrutStyle,
+          textAlign: widget.textAlign,
+          textDirection: widget.textDirection,
+          locale: widget.locale,
+          softWrap: widget.softWrap,
+          overflow: widget.overflow,
+          textScaleFactor: widget.textScaleFactor,
+          maxLines: widget.maxLines,
+          semanticsLabel: widget.semanticsLabel,
+          textWidthBasis: widget.textWidthBasis,
+          textHeightBehavior: widget.textHeightBehavior,
+          selectionColor: widget.selectionColor,
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    for (var recognizer in bambooTextSpanGestureRecognizers) {
+      recognizer.dispose();
+    }
   }
 }
 

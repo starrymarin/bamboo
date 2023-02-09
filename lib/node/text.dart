@@ -1,6 +1,8 @@
+import 'package:bamboo/bamboo.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/render.dart';
 import 'package:bamboo/text/bamboo_text.dart';
+import 'package:bamboo/text/bamboo_text_span.dart';
 import 'package:bamboo/utils/color.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:flutter/rendering.dart';
@@ -63,6 +65,9 @@ class _TextSpanRender extends SpanRender<TextNode> {
 
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
+    BambooConfiguration configuration = BambooConfiguration.of(
+      bambooTextBuildContext.value,
+    );
     TextStyle style = TextStyle(
       backgroundColor: node.backgroundColor,
       color: node.color,
@@ -82,7 +87,8 @@ class _TextSpanRender extends SpanRender<TextNode> {
     if (node.italic == true) {
       style = style.copyWith(fontStyle: FontStyle.italic);
     }
-    return TextSpan(
+    return BambooTextSpan(
+      readOnly: configuration.readOnly,
       text: node.text,
       style: style,
     );
