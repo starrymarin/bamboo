@@ -96,8 +96,10 @@ class BambooTextState extends State<BambooText> {
     }
   }
 
-  void registerBambooTextSpanGestureRecognizer(GestureRecognizer recognizer) {
-    bambooTextSpanGestureRecognizers.add(recognizer);
+  void registerBambooTextSpanGestureRecognizer(GestureRecognizer? recognizer) {
+    if (recognizer != null) {
+      bambooTextSpanGestureRecognizers.add(recognizer);
+    }
   }
 
   ///
@@ -233,10 +235,23 @@ class _TextProxy extends SingleChildRenderObjectWidget {
   @override
   Text get child => super.child! as Text;
 
+  /// 从[Text.build]拷贝，需要保持和Text行为一致
+  TextStyle? normalizeTextStyle(BuildContext context) {
+    final DefaultTextStyle defaultTextStyle = DefaultTextStyle.of(context);
+    TextStyle? effectiveTextStyle = textStyle;
+    if (textStyle == null || textStyle!.inherit) {
+      effectiveTextStyle = defaultTextStyle.style.merge(textStyle);
+    }
+    if (MediaQuery.boldTextOverride(context)) {
+      effectiveTextStyle = effectiveTextStyle!.merge(const TextStyle(fontWeight: FontWeight.bold));
+    }
+    return effectiveTextStyle;
+  }
+
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return _RenderParagraphProxy(
-      textStyle: textStyle,
+    return RenderParagraphProxy(
+      textStyle: normalizeTextStyle(context),
       textAlign: textAlign,
       textDirection: textDirection ?? Directionality.of(context),
       textScaleFactor: textScaleFactor,
@@ -250,9 +265,9 @@ class _TextProxy extends SingleChildRenderObjectWidget {
 
   @override
   void updateRenderObject(
-      BuildContext context, covariant _RenderParagraphProxy renderObject) {
+      BuildContext context, covariant RenderParagraphProxy renderObject) {
     renderObject
-      ..textStyle = textStyle
+      ..textStyle = normalizeTextStyle(context)
       ..textAlign = textAlign
       ..textDirection = textDirection ?? Directionality.of(context)
       ..textScaleFactor = textScaleFactor
@@ -264,8 +279,8 @@ class _TextProxy extends SingleChildRenderObjectWidget {
   }
 }
 
-class _RenderParagraphProxy extends RenderProxyBox {
-  _RenderParagraphProxy({
+class RenderParagraphProxy extends RenderProxyBox {
+  RenderParagraphProxy({
     TextStyle? textStyle,
     TextAlign textAlign = TextAlign.start,
     TextDirection? textDirection,
@@ -290,6 +305,8 @@ class _RenderParagraphProxy extends RenderProxyBox {
   final TextPainter _prototypePainter;
 
   List<SpanRender> _spanRenders;
+
+  double get preferredLineHeight => _prototypePainter.preferredLineHeight;
 
   set textStyle(TextStyle? value) {
     if (_prototypePainter.text!.style == value) {

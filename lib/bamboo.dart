@@ -7,9 +7,12 @@ import 'package:bamboo/node/internal/table.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/text.dart';
+import 'package:bamboo/rendering/editable.dart';
 import 'package:bamboo/widgets/keep_alive.dart';
 import 'package:bamboo/widgets/scroll.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 class Bamboo extends StatefulWidget {
   Bamboo({
@@ -17,6 +20,7 @@ class Bamboo extends StatefulWidget {
     this.document,
     List<NodePlugin>? nodePlugins,
     this.readOnly = true,
+    this.bambooTheme,
   }) {
     this.nodePlugins
       ..[NodeType.paragraph] = ParagraphNodePlugin()
@@ -36,25 +40,46 @@ class Bamboo extends StatefulWidget {
 
   final bool readOnly;
 
+  final BambooTheme? bambooTheme;
+
   @override
   State<StatefulWidget> createState() => _BambooState();
 }
 
 class _BambooState extends State<Bamboo> {
+  final GlobalKey _editorKey = GlobalKey();
+
+  BambooTheme checkBambooTheme(BuildContext context) {
+    ThemeData appTheme = Theme.of(context);
+    BambooTheme checkTheme = widget.bambooTheme ?? BambooTheme();
+    if (checkTheme._cursorColor == null) {
+      checkTheme =
+          checkTheme.copyWith(cursorColor: appTheme.colorScheme.primary);
+    }
+    return checkTheme;
+  }
+
   @override
   Widget build(BuildContext context) {
+    BambooTheme theme = checkBambooTheme(context);
     return BambooConfiguration(
       readOnly: widget.readOnly,
-      child: _Editor(
-        document: widget.document,
-        nodePlugins: widget.nodePlugins,
+      theme: theme,
+      editorKey: _editorKey,
+      child: Editor(
+        key: _editorKey,
+        child: Document(
+          document: widget.document,
+          nodePlugins: widget.nodePlugins,
+        ),
       ),
     );
   }
 }
 
-class _Editor extends StatelessWidget {
-  _Editor({
+class Document extends StatelessWidget {
+  Document({
+    super.key,
     this.document,
     this.nodePlugins = const {},
   }) {
@@ -93,7 +118,12 @@ class _Editor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ScrollController scrollController = ScrollController();
+    RenderEditor? renderEditor =
+        context.findAncestorRenderObjectOfType<RenderEditor>();
+    renderEditor?.setDocumentScrollController(scrollController);
     List<BlockNode> blockNodes = nodes.whereType<BlockNode>().toList();
+
+    BambooTheme theme = BambooTheme.of(context);
 
     Widget content;
     if (useListView) {
@@ -124,27 +154,64 @@ class _Editor extends StatelessWidget {
       behavior: BambooScrollBehavior(),
       child: Scrollbar(
         controller: scrollController,
-        child: Center(
-          child: Container(
-            alignment: Alignment.topCenter,
-            constraints: const BoxConstraints(
-              maxWidth: editorWidth + 8 + 8,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: DefaultTextStyle(
-                style: const TextStyle(
-                  fontSize: defaultFontSize,
-                  color: Color(0xFF333333),
-                  height: 1.6,
-                ),
-                child: content,
-              ),
-            ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+          child: DefaultTextStyle(
+            style: theme.textStyle,
+            child: content,
           ),
         ),
       ),
     );
+  }
+}
+
+class BambooTheme {
+  BambooTheme({
+    this.textStyle = const TextStyle(
+        fontSize: defaultFontSize, color: Color(0xFF333333), height: 1.6),
+    Color? cursorColor,
+    this.cursorWidth = 2.0,
+    this.cursorHeight,
+    this.cursorRadius = const Radius.circular(2.0),
+    this.cursorOffset = Offset.zero,
+  }) : _cursorColor = cursorColor;
+
+  final TextStyle textStyle;
+
+  /// 在[_BambooState]中会检查这个值，如果为空则赋默认值，所以取的时候不会为空
+  final Color? _cursorColor;
+
+  Color get cursorColor => _cursorColor!;
+
+  final double cursorWidth;
+  final double? cursorHeight;
+  final Radius cursorRadius;
+  final Offset cursorOffset;
+
+  BambooTheme copyWith({
+    TextStyle? textStyle,
+    Color? cursorColor,
+    Color? backgroundCursorColor,
+    double? cursorWidth,
+    double? cursorHeight,
+    Radius? cursorRadius,
+    Offset? cursorOffset,
+  }) {
+    return BambooTheme(
+      textStyle: textStyle ?? this.textStyle,
+      cursorColor: cursorColor ?? this.cursorColor,
+      cursorWidth: cursorWidth ?? this.cursorWidth,
+      cursorHeight: cursorHeight ?? this.cursorHeight,
+      cursorRadius: cursorRadius ?? this.cursorRadius,
+      cursorOffset: cursorOffset ?? this.cursorOffset,
+    );
+  }
+
+  static BambooTheme of(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<BambooConfiguration>()!
+        .theme;
   }
 }
 
@@ -153,9 +220,15 @@ class BambooConfiguration extends InheritedWidget {
     super.key,
     required super.child,
     required this.readOnly,
+    required this.theme,
+    required this.editorKey,
   });
 
   final bool readOnly;
+
+  final BambooTheme theme;
+
+  final GlobalKey editorKey;
 
   static BambooConfiguration of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<BambooConfiguration>()!;
@@ -165,5 +238,4 @@ class BambooConfiguration extends InheritedWidget {
   bool updateShouldNotify(covariant BambooConfiguration oldWidget) {
     return readOnly == oldWidget.readOnly;
   }
-
 }

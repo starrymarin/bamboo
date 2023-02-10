@@ -89,6 +89,7 @@ class _TextSpanRender extends SpanRender<TextNode> {
     }
     return BambooTextSpan(
       readOnly: configuration.readOnly,
+      context: bambooTextBuildContext,
       text: node.text,
       style: style,
     );
