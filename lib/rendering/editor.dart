@@ -85,15 +85,15 @@ class _RenderDocumentProxy extends RenderProxyBox {}
 
 class EditorParentData extends ContainerBoxParentData<RenderBox> {}
 
-mixin _RenderEditorWithDocumentProxyMixin<ChildType extends RenderObject>
-    on RenderObject implements RenderObjectWithChildMixin<ChildType> {
-  ChildType? _child;
+mixin _RenderEditorWithDocumentProxyMixin on RenderObject
+    implements RenderObjectWithChildMixin<_RenderDocumentProxy> {
+  _RenderDocumentProxy? _child;
 
   @override
-  ChildType? get child => _child;
+  _RenderDocumentProxy? get child => _child;
 
   @override
-  set child(ChildType? value) {
+  set child(_RenderDocumentProxy? value) {
     _child = value;
   }
 }
@@ -110,7 +110,7 @@ class RenderEditor extends RenderBox
         RelayoutWhenSystemFontsChangeMixin,
         ContainerRenderObjectMixin<RenderBox, EditorParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, EditorParentData>,
-        _RenderEditorWithDocumentProxyMixin<_RenderDocumentProxy>,
+        _RenderEditorWithDocumentProxyMixin,
         RenderProxyBoxMixin<_RenderDocumentProxy> {
   RenderEditor({
     required BambooTheme bambooTheme,
