@@ -85,6 +85,19 @@ class _RenderDocumentProxy extends RenderProxyBox {}
 
 class EditorParentData extends ContainerBoxParentData<RenderBox> {}
 
+mixin _RenderEditorWithDocumentProxyMixin<ChildType extends RenderObject>
+    on RenderObject implements RenderObjectWithChildMixin<ChildType> {
+  ChildType? _child;
+
+  @override
+  ChildType? get child => _child;
+
+  @override
+  set child(ChildType? value) {
+    _child = value;
+  }
+}
+
 ///
 /// 本质上这是一个RenderProxyBox，代理的是Document的render，通过Document的render来
 /// layout,paint等等。
@@ -94,8 +107,11 @@ class EditorParentData extends ContainerBoxParentData<RenderBox> {}
 ///
 class RenderEditor extends RenderBox
     with
+        RelayoutWhenSystemFontsChangeMixin,
         ContainerRenderObjectMixin<RenderBox, EditorParentData>,
-        RenderBoxContainerDefaultsMixin<RenderBox, EditorParentData> {
+        RenderBoxContainerDefaultsMixin<RenderBox, EditorParentData>,
+        _RenderEditorWithDocumentProxyMixin<_RenderDocumentProxy>,
+        RenderProxyBoxMixin<_RenderDocumentProxy> {
   RenderEditor({
     required BambooTheme bambooTheme,
     required double devicePixelRatio,
@@ -132,8 +148,6 @@ class RenderEditor extends RenderBox
 
   late _RenderEditorCursor _renderEditorCursor;
 
-  _RenderDocumentProxy? _renderDocument;
-
   void setDocumentScrollController(ScrollController scrollController) {
     scrollController.addListener(() {
       _renderEditorCursor.markNeedsPaint();
@@ -150,8 +164,8 @@ class RenderEditor extends RenderBox
   @override
   void insert(RenderBox child, {RenderBox? after}) {
     super.insert(child, after: after);
-    if (child is _RenderDocumentProxy && !identical(_renderDocument, child)) {
-      _renderDocument = child;
+    if (child is _RenderDocumentProxy) {
+      this.child = child;
     }
   }
 
@@ -181,81 +195,14 @@ class RenderEditor extends RenderBox
   }
 
   @override
-  double computeMinIntrinsicWidth(double height) {
-    if (_renderDocument != null) {
-      return _renderDocument!.getMinIntrinsicWidth(height);
-    }
-    return 0.0;
-  }
-
-  @override
-  double computeMaxIntrinsicWidth(double height) {
-    if (_renderDocument != null) {
-      return _renderDocument!.getMaxIntrinsicWidth(height);
-    }
-    return 0.0;
-  }
-
-  @override
-  double computeMinIntrinsicHeight(double width) {
-    if (_renderDocument != null) {
-      return _renderDocument!.getMinIntrinsicHeight(width);
-    }
-    return 0.0;
-  }
-
-  @override
-  double computeMaxIntrinsicHeight(double width) {
-    if (_renderDocument != null) {
-      return _renderDocument!.getMaxIntrinsicHeight(width);
-    }
-    return 0.0;
-  }
-
-  @override
-  double? computeDistanceToActualBaseline(TextBaseline baseline) {
-    if (_renderDocument != null) {
-      return _renderDocument!.getDistanceToActualBaseline(baseline);
-    }
-    return super.computeDistanceToActualBaseline(baseline);
-  }
-
-  @override
-  Size computeDryLayout(BoxConstraints constraints) {
-    if (_renderDocument != null) {
-      return _renderDocument!.getDryLayout(constraints);
-    }
-    return computeSizeForNoChild(constraints);
-  }
-
-  @override
   void performLayout() {
     _renderEditorCursor.layout(constraints);
-    if (_renderDocument != null) {
-      _renderDocument!.layout(constraints, parentUsesSize: true);
-      size = _renderDocument!.size;
-    } else {
-      size = computeSizeForNoChild(constraints);
-    }
+    super.performLayout();
   }
-
-  Size computeSizeForNoChild(BoxConstraints constraints) {
-    return constraints.smallest;
-  }
-
-  @override
-  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
-    return _renderDocument?.hitTest(result, position: position) ?? false;
-  }
-
-  @override
-  void applyPaintTransform(RenderObject child, Matrix4 transform) {}
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    if (_renderDocument != null) {
-      context.paintChild(_renderDocument!, offset);
-    }
+    super.paint(context, offset);
     context.paintChild(_renderEditorCursor, offset);
   }
 
