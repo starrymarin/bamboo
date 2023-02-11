@@ -1,14 +1,56 @@
 import 'package:bamboo/bamboo.dart';
-import 'package:bamboo/text/bamboo_text.dart';
+import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 const double _kCaretHeightOffset = 2.0; // pixels
 
-class Editor extends MultiChildRenderObjectWidget {
-  Editor({
-    super.key,
+class Editor extends StatefulWidget {
+  const Editor({super.key, required Document child}) : document = child;
+
+  final Document document;
+
+  static RenderEditor renderObject(BuildContext context) {
+    _EditorScope scope =
+        context.dependOnInheritedWidgetOfExactType<_EditorScope>()!;
+    return scope._editorKey.currentContext?.findRenderObject() as RenderEditor;
+  }
+
+  @override
+  State<StatefulWidget> createState() => EditorState();
+}
+
+class EditorState extends State<Editor> with TickerProviderStateMixin<Editor> {
+  final GlobalKey _editorKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    return _EditorScope(
+      editorKey: _editorKey,
+      child: _Editor(
+        key: _editorKey,
+        child: widget.document,
+      ),
+    );
+  }
+}
+
+class _EditorScope extends InheritedWidget {
+  const _EditorScope({required GlobalKey editorKey, required super.child})
+      : _editorKey = editorKey;
+
+  final GlobalKey _editorKey;
+
+  @override
+  bool updateShouldNotify(covariant _EditorScope oldWidget) {
+    return _editorKey != oldWidget._editorKey;
+  }
+}
+
+class _Editor extends MultiChildRenderObjectWidget {
+  _Editor({
+    required GlobalKey super.key,
     required Document child,
   }) : super(children: [_DocumentProxy(child: child)]);
 
@@ -211,7 +253,6 @@ class RenderEditor extends RenderBox
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    debugPrint("editor paint");
     if (_renderDocument != null) {
       context.paintChild(_renderDocument!, offset);
     }
@@ -339,8 +380,8 @@ class _RenderEditorCursor extends _RenderEditorCustomPaint {
     }
 
     RenderParagraph paragraph = renderParagraphProxy.child;
-    Offset paragraphOffset = paragraph.localToGlobal(Offset.zero) -
-        localToGlobal(Offset.zero);
+    Offset paragraphOffset =
+        paragraph.localToGlobal(Offset.zero) - localToGlobal(Offset.zero);
     Offset caretOffset =
         paragraph.getOffsetForCaret(caretPosition, caretPrototype);
     Rect caretRect = caretPrototype.shift(caretOffset);
@@ -372,13 +413,20 @@ class _RenderEditorCursor extends _RenderEditorCustomPaint {
       }
     }
     caretRect = caretRect.shift(paragraphOffset);
-    final Rect integralRect = caretRect.shift(_snapToPhysicalPixel(caretRect.topLeft));
+    final Rect integralRect =
+        caretRect.shift(_snapToPhysicalPixel(caretRect.topLeft));
 
-    context.canvas.drawRRect(
-      RRect.fromRectAndRadius(integralRect, _bambooTheme.cursorRadius),
-      Paint()
-        ..style = PaintingStyle.fill
-        ..color = _bambooTheme.cursorColor,
+    RRect caretRRect = RRect.fromRectAndRadius(
+      integralRect,
+      _bambooTheme.cursorRadius,
     );
+    if (!caretRRect.hasNaN) {
+      context.canvas.drawRRect(
+        caretRRect,
+        Paint()
+          ..style = PaintingStyle.fill
+          ..color = _bambooTheme.cursorColor,
+      );
+    }
   }
 }

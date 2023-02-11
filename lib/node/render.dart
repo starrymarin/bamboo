@@ -1,5 +1,5 @@
 import 'package:bamboo/node/node.dart';
-import 'package:bamboo/text/bamboo_text.dart';
+import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 

@@ -7,7 +7,7 @@ import 'package:bamboo/node/internal/table.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/text.dart';
-import 'package:bamboo/rendering/editable.dart';
+import 'package:bamboo/rendering/editor.dart';
 import 'package:bamboo/widgets/keep_alive.dart';
 import 'package:bamboo/widgets/scroll.dart';
 import 'package:flutter/cupertino.dart';
@@ -47,8 +47,6 @@ class Bamboo extends StatefulWidget {
 }
 
 class _BambooState extends State<Bamboo> {
-  final GlobalKey _editorKey = GlobalKey();
-
   BambooTheme checkBambooTheme(BuildContext context) {
     ThemeData appTheme = Theme.of(context);
     BambooTheme checkTheme = widget.bambooTheme ?? BambooTheme();
@@ -65,9 +63,7 @@ class _BambooState extends State<Bamboo> {
     return BambooConfiguration(
       readOnly: widget.readOnly,
       theme: theme,
-      editorKey: _editorKey,
       child: Editor(
-        key: _editorKey,
         child: Document(
           document: widget.document,
           nodePlugins: widget.nodePlugins,
@@ -221,14 +217,11 @@ class BambooConfiguration extends InheritedWidget {
     required super.child,
     required this.readOnly,
     required this.theme,
-    required this.editorKey,
   });
 
   final bool readOnly;
 
   final BambooTheme theme;
-
-  final GlobalKey editorKey;
 
   static BambooConfiguration of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<BambooConfiguration>()!;

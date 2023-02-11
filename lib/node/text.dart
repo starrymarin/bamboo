@@ -1,8 +1,8 @@
 import 'package:bamboo/bamboo.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/render.dart';
-import 'package:bamboo/text/bamboo_text.dart';
-import 'package:bamboo/text/bamboo_text_span.dart';
+import 'package:bamboo/rendering/bamboo_text.dart';
+import 'package:bamboo/rendering/bamboo_text_span.dart';
 import 'package:bamboo/utils/color.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:flutter/rendering.dart';

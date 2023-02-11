@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:bamboo/bamboo.dart';
-import 'package:bamboo/rendering/editable.dart';
-import 'package:bamboo/text/bamboo_text.dart';
+import 'package:bamboo/rendering/editor.dart';
+import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -37,14 +37,12 @@ class BambooTextSpanTapRecognizer extends TapGestureRecognizer {
 
   final BambooTextBuildContext context;
 
-  late final RenderEditor? _renderEditor = BambooConfiguration.of(context.value)
-      .editorKey
-      .currentContext
-      ?.findRenderObject() as RenderEditor?;
+  late final RenderEditor _renderEditor = Editor.renderObject(context.value);
 
   TapDownDetails? _downDetails;
 
-  late final RenderParagraphProxy? _paragraphProxy = _findRenderParagraph(context.value);
+  late final RenderParagraphProxy? _paragraphProxy =
+      _findRenderParagraph(context.value);
 
   RenderParagraphProxy? _findRenderParagraph(BuildContext context) {
     RenderParagraphProxy? paragraph;
@@ -83,6 +81,6 @@ class BambooTextSpanTapRecognizer extends TapGestureRecognizer {
 
     TextPosition positionInParagraph =
         paragraph.getPositionForOffset(downDetails.localPosition);
-    _renderEditor?.updateCursor(paragraphProxy, positionInParagraph);
+    _renderEditor.updateCursor(paragraphProxy, positionInParagraph);
   }
 }
