@@ -1,15 +1,19 @@
 import 'package:bamboo/bamboo.dart';
-import 'package:bamboo/rendering/bamboo_text.dart';
-import 'package:flutter/foundation.dart';
+import 'package:bamboo/rendering/cursor.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-
-const double _kCaretHeightOffset = 2.0; // pixels
 
 class Editor extends StatefulWidget {
   const Editor({super.key, required Document child}) : document = child;
 
   final Document document;
+
+  static EditorState of(BuildContext context) {
+    _EditorScope scope =
+        context.dependOnInheritedWidgetOfExactType<_EditorScope>()!;
+    return scope._editorKey.currentContext
+        ?.findAncestorStateOfType<EditorState>() as EditorState;
+  }
 
   static RenderEditor renderObject(BuildContext context) {
     _EditorScope scope =
@@ -21,8 +25,12 @@ class Editor extends StatefulWidget {
   State<StatefulWidget> createState() => EditorState();
 }
 
-class EditorState extends State<Editor> with TickerProviderStateMixin<Editor> {
+class EditorState extends State<Editor>
+    with TickerProviderStateMixin<Editor>, EditorStateFloatingCursorMixin {
   final GlobalKey _editorKey = GlobalKey();
+
+  RenderEditor get renderEditor =>
+      _editorKey.currentContext?.findRenderObject() as RenderEditor;
 
   @override
   Widget build(BuildContext context) {
@@ -111,17 +119,17 @@ class RenderEditor extends RenderBox
         ContainerRenderObjectMixin<RenderBox, EditorParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, EditorParentData>,
         _RenderEditorWithDocumentProxyMixin,
-        RenderProxyBoxMixin<_RenderDocumentProxy> {
+        RenderProxyBoxMixin<_RenderDocumentProxy>,
+        RenderEditorFloatingCursorMixin {
   RenderEditor({
     required BambooTheme bambooTheme,
     required double devicePixelRatio,
   })  : _bambooTheme = bambooTheme,
         _devicePixelRatio = devicePixelRatio {
-    _renderEditorCursor = _RenderEditorCursor(
+    renderEditorFloatingCursor = RenderEditorFloatingCursor(
       bambooTheme: _bambooTheme,
       devicePixelRatio: _devicePixelRatio,
     );
-    adoptChild(_renderEditorCursor);
   }
 
   BambooTheme _bambooTheme;
@@ -131,7 +139,7 @@ class RenderEditor extends RenderBox
       return;
     }
     _bambooTheme = value;
-    _renderEditorCursor.bambooTheme = _bambooTheme;
+    renderEditorFloatingCursor.bambooTheme = _bambooTheme;
     markNeedsPaint();
   }
 
@@ -142,23 +150,8 @@ class RenderEditor extends RenderBox
       return;
     }
     _devicePixelRatio = value;
-    _renderEditorCursor.devicePixelRatio = _devicePixelRatio;
+    renderEditorFloatingCursor.devicePixelRatio = _devicePixelRatio;
     markNeedsLayout();
-  }
-
-  late _RenderEditorCursor _renderEditorCursor;
-
-  void setDocumentScrollController(ScrollController scrollController) {
-    scrollController.addListener(() {
-      _renderEditorCursor.markNeedsPaint();
-    });
-  }
-
-  void updateCursor(
-    RenderParagraphProxy renderParagraphProxy,
-    TextPosition textPosition,
-  ) {
-    _renderEditorCursor._updateCursor(renderParagraphProxy, textPosition);
   }
 
   @override
@@ -175,45 +168,10 @@ class RenderEditor extends RenderBox
       child.parentData = EditorParentData();
     }
   }
-
-  @override
-  void attach(covariant PipelineOwner owner) {
-    super.attach(owner);
-    _renderEditorCursor.attach(owner);
-  }
-
-  @override
-  void detach() {
-    super.detach();
-    _renderEditorCursor.detach();
-  }
-
-  @override
-  void markNeedsPaint() {
-    super.markNeedsPaint();
-    _renderEditorCursor.markNeedsPaint();
-  }
-
-  @override
-  void performLayout() {
-    _renderEditorCursor.layout(constraints);
-    super.performLayout();
-  }
-
-  @override
-  void paint(PaintingContext context, Offset offset) {
-    super.paint(context, offset);
-    context.paintChild(_renderEditorCursor, offset);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _renderEditorCursor.dispose();
-  }
 }
 
-class _RenderEditorCustomPaint extends RenderBox {
+@protected
+class RenderEditorCustomPaint extends RenderBox {
   @override
   RenderEditor? get parent => super.parent as RenderEditor?;
 
@@ -225,155 +183,4 @@ class _RenderEditorCustomPaint extends RenderBox {
 
   @override
   Size computeDryLayout(BoxConstraints constraints) => constraints.biggest;
-}
-
-class _RenderEditorCursor extends _RenderEditorCustomPaint {
-  _RenderEditorCursor({
-    required BambooTheme bambooTheme,
-    required double devicePixelRatio,
-  })  : _bambooTheme = bambooTheme,
-        _devicePixelRatio = devicePixelRatio;
-
-  BambooTheme _bambooTheme;
-
-  set bambooTheme(BambooTheme value) {
-    if (_bambooTheme == value) {
-      return;
-    }
-    _bambooTheme = value;
-    markNeedsPaint();
-  }
-
-  double _devicePixelRatio;
-
-  set devicePixelRatio(double value) {
-    if (_devicePixelRatio == value) {
-      return;
-    }
-    _devicePixelRatio = value;
-    markNeedsPaint();
-  }
-
-  late Rect? _caretPrototype = _computeCaretPrototype();
-
-  RenderParagraphProxy? _renderParagraphProxy;
-  TextPosition? _caretPosition;
-
-  void _updateCursor(
-    RenderParagraphProxy? renderParagraphProxy,
-    TextPosition? textPosition,
-  ) {
-    _renderParagraphProxy = renderParagraphProxy;
-    _caretPosition = textPosition;
-    markNeedsPaint();
-  }
-
-  Rect? _computeCaretPrototype() {
-    double cursorWidth = _bambooTheme.cursorWidth;
-    double? cursorHeight =
-        _bambooTheme.cursorHeight ?? _renderParagraphProxy?.preferredLineHeight;
-    if (cursorHeight == null) {
-      return null;
-    }
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        return Rect.fromLTWH(0.0, 0.0, cursorWidth, cursorHeight + 2);
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        return Rect.fromLTWH(
-          0.0,
-          _kCaretHeightOffset,
-          cursorWidth,
-          cursorHeight - 2.0 * _kCaretHeightOffset,
-        );
-    }
-  }
-
-  @override
-  void markNeedsPaint() {
-    _caretPrototype = _computeCaretPrototype();
-    super.markNeedsPaint();
-  }
-
-  // Computes the offset to apply to the given [sourceOffset] so it perfectly
-  // snaps to physical pixels.
-  Offset _snapToPhysicalPixel(Offset sourceOffset) {
-    final Offset globalOffset = localToGlobal(sourceOffset);
-    final double pixelMultiple = 1.0 / _devicePixelRatio;
-    return Offset(
-      globalOffset.dx.isFinite
-          ? (globalOffset.dx / pixelMultiple).round() * pixelMultiple -
-              globalOffset.dx
-          : 0,
-      globalOffset.dy.isFinite
-          ? (globalOffset.dy / pixelMultiple).round() * pixelMultiple -
-              globalOffset.dy
-          : 0,
-    );
-  }
-
-  @override
-  void paint(PaintingContext context, Offset offset) {
-    final renderParagraphProxy = _renderParagraphProxy;
-    final caretPosition = _caretPosition;
-    final caretPrototype = _caretPrototype;
-    if (renderParagraphProxy == null ||
-        caretPosition == null ||
-        caretPrototype == null) {
-      return;
-    }
-
-    RenderParagraph paragraph = renderParagraphProxy.child;
-    Offset paragraphOffset =
-        paragraph.localToGlobal(Offset.zero) - localToGlobal(Offset.zero);
-    Offset caretOffset =
-        paragraph.getOffsetForCaret(caretPosition, caretPrototype);
-    Rect caretRect = caretPrototype.shift(caretOffset);
-
-    final double? caretHeight = paragraph.getFullHeightForCaret(caretPosition);
-    if (caretHeight != null) {
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.iOS:
-        case TargetPlatform.macOS:
-          final double heightDiff = caretHeight - caretRect.height;
-          caretRect = Rect.fromLTWH(
-            caretRect.left,
-            caretRect.top + heightDiff / 2,
-            caretRect.width,
-            caretRect.height,
-          );
-          break;
-        case TargetPlatform.android:
-        case TargetPlatform.fuchsia:
-        case TargetPlatform.linux:
-        case TargetPlatform.windows:
-          caretRect = Rect.fromLTWH(
-            caretRect.left,
-            caretRect.top - _kCaretHeightOffset,
-            caretRect.width,
-            caretHeight,
-          );
-          break;
-      }
-    }
-    caretRect = caretRect.shift(paragraphOffset);
-    final Rect integralRect =
-        caretRect.shift(_snapToPhysicalPixel(caretRect.topLeft));
-
-    RRect caretRRect = RRect.fromRectAndRadius(
-      integralRect,
-      _bambooTheme.cursorRadius,
-    );
-    if (!caretRRect.hasNaN) {
-      context.canvas.drawRRect(
-        caretRRect,
-        Paint()
-          ..style = PaintingStyle.fill
-          ..color = _bambooTheme.cursorColor,
-      );
-    }
-  }
 }

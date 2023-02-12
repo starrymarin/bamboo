@@ -1,0 +1,269 @@
+import 'dart:async';
+
+import 'package:bamboo/bamboo.dart';
+import 'package:bamboo/rendering/bamboo_text.dart';
+import 'package:bamboo/rendering/editor.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
+
+const double _kCaretHeightOffset = 2.0; // pixels
+
+@protected
+mixin EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor> {
+  static const Duration _kFloatingCursorResetTime = Duration(milliseconds: 125);
+
+  static const Duration _blinkHalfPeriod = Duration(milliseconds: 500);
+
+  static const Duration _fadeDuration = Duration(milliseconds: 250);
+
+  EditorState get _editorState => this as EditorState;
+
+  RenderEditorFloatingCursor get _renderEditorFloatingCursor =>
+      _editorState.renderEditor._renderEditorFloatingCursor;
+
+  late final AnimationController _blinkAnimationController =
+      AnimationController(vsync: this, duration: _fadeDuration)..addListener(() {});
+
+  void updateFloatingCursor(
+    RenderParagraphProxy? renderParagraphProxy,
+    TextPosition? textPosition,
+  ) {
+    _renderEditorFloatingCursor._updateFloatingCursor(
+        renderParagraphProxy, textPosition);
+  }
+
+  void hideFloatingCursor() {
+    updateFloatingCursor(null, null);
+  }
+
+  void _startBlink() {
+
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _blinkAnimationController.dispose();
+  }
+}
+
+@protected
+mixin RenderEditorFloatingCursorMixin on RenderBox {
+  late RenderEditorFloatingCursor _renderEditorFloatingCursor;
+
+  RenderEditorFloatingCursor get renderEditorFloatingCursor =>
+      _renderEditorFloatingCursor;
+
+  set renderEditorFloatingCursor(RenderEditorFloatingCursor value) {
+    _renderEditorFloatingCursor = value;
+    adoptChild(_renderEditorFloatingCursor);
+  }
+
+  void setDocumentScrollController(ScrollController scrollController) {
+    scrollController.addListener(() {
+      _renderEditorFloatingCursor.markNeedsPaint();
+    });
+  }
+
+  @override
+  void attach(covariant PipelineOwner owner) {
+    super.attach(owner);
+    _renderEditorFloatingCursor.attach(owner);
+  }
+
+  @override
+  void detach() {
+    super.detach();
+    _renderEditorFloatingCursor.detach();
+  }
+
+  @override
+  void markNeedsPaint() {
+    super.markNeedsPaint();
+    _renderEditorFloatingCursor.markNeedsPaint();
+  }
+
+  @override
+  void performLayout() {
+    _renderEditorFloatingCursor.layout(constraints);
+    super.performLayout();
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    super.paint(context, offset);
+    context.paintChild(_renderEditorFloatingCursor, offset);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _renderEditorFloatingCursor.dispose();
+  }
+}
+
+@protected
+class RenderEditorFloatingCursor extends RenderEditorCustomPaint {
+  RenderEditorFloatingCursor({
+    required BambooTheme bambooTheme,
+    required double devicePixelRatio,
+  })  : _bambooTheme = bambooTheme,
+        _devicePixelRatio = devicePixelRatio;
+
+  BambooTheme _bambooTheme;
+
+  set bambooTheme(BambooTheme value) {
+    if (_bambooTheme == value) {
+      return;
+    }
+    _bambooTheme = value;
+    markNeedsPaint();
+  }
+
+  double _devicePixelRatio;
+
+  set devicePixelRatio(double value) {
+    if (_devicePixelRatio == value) {
+      return;
+    }
+    _devicePixelRatio = value;
+    markNeedsPaint();
+  }
+
+  double? _blinkValue;
+
+  set blinkValue(double? value) {
+    if (_blinkValue == value) {
+      return;
+    }
+    _blinkValue = value;
+    markNeedsPaint();
+  }
+
+  late Rect? _caretPrototype = _computeCaretPrototype();
+
+  RenderParagraphProxy? _renderParagraphProxy;
+  TextPosition? _caretPosition;
+
+  void _updateFloatingCursor(
+    RenderParagraphProxy? renderParagraphProxy,
+    TextPosition? textPosition,
+  ) {
+    _renderParagraphProxy = renderParagraphProxy;
+    _caretPosition = textPosition;
+    markNeedsPaint();
+  }
+
+  Rect? _computeCaretPrototype() {
+    double cursorWidth = _bambooTheme.cursorWidth;
+    double? cursorHeight =
+        _bambooTheme.cursorHeight ?? _renderParagraphProxy?.preferredLineHeight;
+    if (cursorHeight == null) {
+      return null;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+        return Rect.fromLTWH(0.0, 0.0, cursorWidth, cursorHeight + 2);
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        return Rect.fromLTWH(
+          0.0,
+          _kCaretHeightOffset,
+          cursorWidth,
+          cursorHeight - 2.0 * _kCaretHeightOffset,
+        );
+    }
+  }
+
+  @override
+  void markNeedsPaint() {
+    _caretPrototype = _computeCaretPrototype();
+    super.markNeedsPaint();
+  }
+
+  // Computes the offset to apply to the given [sourceOffset] so it perfectly
+  // snaps to physical pixels.
+  Offset _snapToPhysicalPixel(Offset sourceOffset) {
+    final Offset globalOffset = localToGlobal(sourceOffset);
+    final double pixelMultiple = 1.0 / _devicePixelRatio;
+    return Offset(
+      globalOffset.dx.isFinite
+          ? (globalOffset.dx / pixelMultiple).round() * pixelMultiple -
+              globalOffset.dx
+          : 0,
+      globalOffset.dy.isFinite
+          ? (globalOffset.dy / pixelMultiple).round() * pixelMultiple -
+              globalOffset.dy
+          : 0,
+    );
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final renderParagraphProxy = _renderParagraphProxy;
+    final caretPosition = _caretPosition;
+    final caretPrototype = _caretPrototype;
+    if (renderParagraphProxy == null ||
+        caretPosition == null ||
+        caretPrototype == null) {
+      return;
+    }
+
+    RenderParagraph paragraph = renderParagraphProxy.child;
+    Offset paragraphOffset =
+        paragraph.localToGlobal(Offset.zero) - localToGlobal(Offset.zero);
+    Offset caretOffset =
+        paragraph.getOffsetForCaret(caretPosition, caretPrototype);
+    Rect caretRect = caretPrototype.shift(caretOffset);
+
+    final double? caretHeight = paragraph.getFullHeightForCaret(caretPosition);
+    if (caretHeight != null) {
+      switch (defaultTargetPlatform) {
+        case TargetPlatform.iOS:
+        case TargetPlatform.macOS:
+          final double heightDiff = caretHeight - caretRect.height;
+          caretRect = Rect.fromLTWH(
+            caretRect.left,
+            caretRect.top + heightDiff / 2,
+            caretRect.width,
+            caretRect.height,
+          );
+          break;
+        case TargetPlatform.android:
+        case TargetPlatform.fuchsia:
+        case TargetPlatform.linux:
+        case TargetPlatform.windows:
+          caretRect = Rect.fromLTWH(
+            caretRect.left,
+            caretRect.top - _kCaretHeightOffset,
+            caretRect.width,
+            caretHeight,
+          );
+          break;
+      }
+    }
+    caretRect = caretRect.shift(paragraphOffset);
+    final Rect integralRect =
+        caretRect.shift(_snapToPhysicalPixel(caretRect.topLeft));
+
+    RRect caretRRect = RRect.fromRectAndRadius(
+      integralRect,
+      _bambooTheme.cursorRadius,
+    );
+
+    if (!caretRRect.hasNaN) {
+      context.canvas.drawRRect(
+        caretRRect,
+        Paint()
+          ..style = PaintingStyle.fill
+          ..color = _bambooTheme.cursorColor
+              .withOpacity(_blinkValue == null ? 1 : _blinkValue!)
+              .withOpacity(0.75),
+      );
+    }
+  }
+}

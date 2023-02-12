@@ -37,7 +37,7 @@ class BambooTextSpanTapRecognizer extends TapGestureRecognizer {
 
   final BambooTextBuildContext context;
 
-  late final RenderEditor _renderEditor = Editor.renderObject(context.value);
+  late final EditorState _editorState = Editor.of(context.value);
 
   TapDownDetails? _downDetails;
 
@@ -81,6 +81,6 @@ class BambooTextSpanTapRecognizer extends TapGestureRecognizer {
 
     TextPosition positionInParagraph =
         paragraph.getPositionForOffset(downDetails.localPosition);
-    _renderEditor.updateCursor(paragraphProxy, positionInParagraph);
+    _editorState.updateFloatingCursor(paragraphProxy, positionInParagraph);
   }
 }
