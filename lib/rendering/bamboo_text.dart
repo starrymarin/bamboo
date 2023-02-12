@@ -12,16 +12,15 @@ import 'package:flutter/widgets.dart';
 /// 对[BambooText.build]context的封装，构造方法声明为私有，这限制了[SpanNode.buildSpan]
 /// 只能在[BambooText]中调用
 ///
-/// 使用[value]构建的InlineSpan一定在[BambooText]内部，[BambooText]销毁时会一并销毁，
-/// 所以无需担心[BuildContext]泄露的问题
-///
 class BambooTextBuildContext {
-  BambooTextBuildContext._wrap(this.value);
+  BambooTextBuildContext._wrap(BuildContext context) : _weakValue = WeakReference(context);
 
-  final BuildContext value;
+  final WeakReference<BuildContext> _weakValue;
 
-  BambooTextState state() {
-    return (value as StatefulElement).state as BambooTextState;
+  BuildContext? get value => _weakValue.target;
+
+  BambooTextState? state() {
+    return (value as StatefulElement?)?.state as BambooTextState?;
   }
 }
 

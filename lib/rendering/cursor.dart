@@ -13,17 +13,36 @@ const double _kCaretHeightOffset = 2.0; // pixels
 mixin EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor> {
   static const Duration _kFloatingCursorResetTime = Duration(milliseconds: 125);
 
-  static const Duration _blinkHalfPeriod = Duration(milliseconds: 500);
-
-  static const Duration _fadeDuration = Duration(milliseconds: 250);
-
   EditorState get _editorState => this as EditorState;
 
-  RenderEditorFloatingCursor get _renderEditorFloatingCursor =>
+  late final RenderEditorFloatingCursor _renderEditorFloatingCursor =
       _editorState.renderEditor._renderEditorFloatingCursor;
 
-  late final AnimationController _blinkAnimationController =
-      AnimationController(vsync: this, duration: _fadeDuration)..addListener(() {});
+  late Animation<double> _blinkAnimation;
+  late final AnimationController _blinkAnimationController = () {
+    AnimationController controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+    _blinkAnimation = TweenSequence([
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 25),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 0.0).chain(
+          CurveTween(curve: Curves.easeOut),
+        ),
+        weight: 25,
+      ),
+      TweenSequenceItem(tween: ConstantTween(0.0), weight: 25),
+      TweenSequenceItem(
+        tween: Tween(begin: 0.0, end: 1.0).chain(
+          CurveTween(curve: Curves.easeOut),
+        ),
+        weight: 25,
+      ),
+    ]).animate(controller);
+    _blinkAnimation.addListener(_updateBlinkValue);
+    return controller;
+  }();
 
   void updateFloatingCursor(
     RenderParagraphProxy? renderParagraphProxy,
@@ -31,6 +50,7 @@ mixin EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor> {
   ) {
     _renderEditorFloatingCursor._updateFloatingCursor(
         renderParagraphProxy, textPosition);
+    _startBlink();
   }
 
   void hideFloatingCursor() {
@@ -38,12 +58,28 @@ mixin EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor> {
   }
 
   void _startBlink() {
+    if (_blinkAnimationController.isAnimating) {
+      _stopBlink();
+    }
+    Timer(const Duration(milliseconds: 500), () {
+      _blinkAnimationController.repeat();
+    });
+  }
 
+  void _stopBlink() {
+    _blinkAnimationController.reset();
+    _blinkAnimationController.stop();
+    _renderEditorFloatingCursor.blinkValue = 1;
+  }
+
+  void _updateBlinkValue() {
+    _renderEditorFloatingCursor.blinkValue = _blinkAnimation.value;
   }
 
   @override
   void dispose() {
     super.dispose();
+    _blinkAnimation.removeListener(_updateBlinkValue);
     _blinkAnimationController.dispose();
   }
 }
@@ -131,9 +167,9 @@ class RenderEditorFloatingCursor extends RenderEditorCustomPaint {
     markNeedsPaint();
   }
 
-  double? _blinkValue;
+  double _blinkValue = 1;
 
-  set blinkValue(double? value) {
+  set blinkValue(double value) {
     if (_blinkValue == value) {
       return;
     }
@@ -260,9 +296,7 @@ class RenderEditorFloatingCursor extends RenderEditorCustomPaint {
         caretRRect,
         Paint()
           ..style = PaintingStyle.fill
-          ..color = _bambooTheme.cursorColor
-              .withOpacity(_blinkValue == null ? 1 : _blinkValue!)
-              .withOpacity(0.75),
+          ..color = _bambooTheme.cursorColor.withOpacity(_blinkValue * 0.75),
       );
     }
   }

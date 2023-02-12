@@ -66,7 +66,7 @@ class _TextSpanRender extends SpanRender<TextNode> {
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
     BambooConfiguration configuration = BambooConfiguration.of(
-      bambooTextBuildContext.value,
+      bambooTextBuildContext.value!,
     );
     TextStyle style = TextStyle(
       backgroundColor: node.backgroundColor,

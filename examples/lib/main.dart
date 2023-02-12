@@ -74,7 +74,6 @@ class _MyHomePageState extends State<MyHomePage> {
         readOnly: false,
         document: document.map((e) => e as NodeJson).toList(),
       ),
-      // body: TextField(),
     );
   }
 }
