@@ -1,7 +1,7 @@
 import 'package:bamboo/node/internal/paragraph.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
-import 'package:bamboo/node/render.dart';
+import 'package:bamboo/node/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 ///
@@ -11,7 +11,7 @@ class BlockQuoteNode extends BlockNode {
   BlockQuoteNode({required super.json});
 
   @override
-  WidgetRender<Node> createRender() => _BlockQuoteWidgetRender(node: this);
+  WidgetRendering<Node> createRender() => _BlockQuoteWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -22,8 +22,8 @@ class BlockQuoteNode extends BlockNode {
   }
 }
 
-class _BlockQuoteWidgetRender extends WidgetRender<BlockQuoteNode> {
-  _BlockQuoteWidgetRender({required super.node});
+class _BlockQuoteWidgetRendering extends WidgetRendering<BlockQuoteNode> {
+  _BlockQuoteWidgetRendering({required super.node});
 
   @override
   Widget build(BuildContext context) {

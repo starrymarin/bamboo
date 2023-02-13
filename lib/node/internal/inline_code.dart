@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
-import 'package:bamboo/node/render.dart';
+import 'package:bamboo/node/rendering.dart';
 import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:bamboo/utils/key.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +21,7 @@ class InlineCodeNode extends InlineNode {
   String get key => super.key ?? randomKey();
 
   @override
-  SpanRender<Node> createRender() => _InlineCodeRender(node: this);
+  SpanRendering<Node> createRender() => _InlineCodeRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -32,8 +32,8 @@ class InlineCodeNode extends InlineNode {
   }
 }
 
-class _InlineCodeRender extends SpanRender<InlineCodeNode> {
-  _InlineCodeRender({required super.node});
+class _InlineCodeRendering extends SpanRendering<InlineCodeNode> {
+  _InlineCodeRendering({required super.node});
 
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
@@ -75,12 +75,12 @@ class _InlineCodeRender extends SpanRender<InlineCodeNode> {
   }
 
   @override
-  void paint(
+  void beforePaint(
     RenderParagraph renderParagraph,
     PaintingContext context,
     Offset offset,
   ) {
-    super.paint(renderParagraph, context, offset);
+    super.beforePaint(renderParagraph, context, offset);
     int preLength = 0;
     _InlineCodeTextSpan? textSpan;
     renderParagraph.text.visitChildren((span) {
@@ -217,7 +217,7 @@ class _InlineCodeEdgeLabel extends StatelessWidget {
   }
 }
 
-class _InlineCodeWidgetRender extends WidgetRender<InlineCodeNode> {
+class _InlineCodeWidgetRender extends WidgetRendering<InlineCodeNode> {
   _InlineCodeWidgetRender({required super.node});
 
   @override

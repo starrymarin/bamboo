@@ -1,6 +1,6 @@
 import 'package:bamboo/bamboo.dart';
 import 'package:bamboo/node/internal/json.dart';
-import 'package:bamboo/node/render.dart';
+import 'package:bamboo/node/rendering.dart';
 import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:bamboo/rendering/bamboo_text_span.dart';
 import 'package:bamboo/utils/color.dart';
@@ -12,7 +12,7 @@ class TextNode extends Node implements SpanNode {
   TextNode({required super.json});
 
   @override
-  SpanRender get render => super.render as SpanRender;
+  SpanRendering get render => super.render as SpanRendering;
 
   late String text = json[JsonKey.text] ?? "";
 
@@ -37,7 +37,7 @@ class TextNode extends Node implements SpanNode {
   }
 
   @override
-  NodeRender<Node> createRender() => _TextSpanRender(node: this);
+  NodeRendering<Node> createRender() => _TextSpanRender(node: this);
 
   @override
   void update() {
@@ -60,7 +60,7 @@ class TextNode extends Node implements SpanNode {
   }
 }
 
-class _TextSpanRender extends SpanRender<TextNode> {
+class _TextSpanRender extends SpanRendering<TextNode> {
   _TextSpanRender({required super.node});
 
   @override

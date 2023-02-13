@@ -1,4 +1,4 @@
-import 'package:bamboo/node/render.dart';
+import 'package:bamboo/node/rendering.dart';
 import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:flutter/widgets.dart';
 import 'package:bamboo/node/internal/json.dart';
@@ -24,7 +24,7 @@ class ParagraphNode extends BlockNode {
   }();
 
   @override
-  WidgetRender<Node> createRender() => ParagraphWidgetRender(node: this);
+  WidgetRendering<Node> createRender() => ParagraphWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -37,8 +37,8 @@ class ParagraphNode extends BlockNode {
   }
 }
 
-class ParagraphWidgetRender extends WidgetRender<ParagraphNode> {
-  ParagraphWidgetRender({required super.node});
+class ParagraphWidgetRendering extends WidgetRendering<ParagraphNode> {
+  ParagraphWidgetRendering({required super.node});
 
   final int _indentSize = 30;
 

@@ -1,4 +1,4 @@
-import 'package:bamboo/node/render.dart';
+import 'package:bamboo/node/rendering.dart';
 import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:bamboo/utils/collection.dart';
 import 'package:flutter/widgets.dart';
@@ -23,11 +23,11 @@ abstract class Node with ChangeNotifier {
 
   final List<Node> children = [];
 
-  late final NodeRender render = () {
+  late final NodeRendering render = () {
     return createRender();
   }();
 
-  NodeRender createRender();
+  NodeRendering createRender();
 
   void update();
 
@@ -54,10 +54,10 @@ abstract class BlockNode extends ElementNode implements WidgetNode {
   BlockNode({required super.json});
 
   @override
-  WidgetRender get render => super.render as WidgetRender;
+  WidgetRendering get render => super.render as WidgetRendering;
 
   @override
-  WidgetRender createRender();
+  WidgetRendering createRender();
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +74,10 @@ abstract class InlineNode extends ElementNode implements SpanNode {
   InlineNode({required super.json});
 
   @override
-  SpanRender get render => super.render as SpanRender;
+  SpanRendering get render => super.render as SpanRendering;
 
   @override
-  SpanRender createRender();
+  SpanRendering createRender();
 
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
@@ -91,7 +91,7 @@ abstract class InlineNode extends ElementNode implements SpanNode {
 }
 
 ///
-/// [WidgetNode]会被对应到[NodeWidget]，这个widget会使用[WidgetRender]构建真正展示
+/// [WidgetNode]会被对应到[NodeWidget]，这个widget会使用[WidgetRendering]构建真正展示
 /// 的Widget，而[NodeWidget]的作用是监听[Node.update]，以此重新构建widget
 ///
 class NodeWidget extends StatefulWidget {
@@ -103,7 +103,7 @@ class NodeWidget extends StatefulWidget {
 
   final Node node;
 
-  final WidgetRender widgetRender;
+  final WidgetRendering widgetRender;
 
   @override
   State<StatefulWidget> createState() => NodeWidgetState();

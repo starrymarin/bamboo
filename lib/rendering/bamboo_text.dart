@@ -2,7 +2,7 @@ import 'dart:collection';
 import 'dart:ui' as ui show TextHeightBehavior;
 
 import 'package:bamboo/node/node.dart';
-import 'package:bamboo/node/render.dart';
+import 'package:bamboo/node/rendering.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
@@ -144,7 +144,7 @@ class BambooTextState extends State<BambooText> {
         textHeightBehavior: widget.textHeightBehavior,
         spanRenders: widget.childNodes
             .map((node) => node.render)
-            .whereType<SpanRender>()
+            .whereType<SpanRendering>()
             .toList(),
         child: Text.rich(
           _buildTextSpan(BambooTextBuildContext._wrap(context)),
@@ -229,7 +229,7 @@ class _TextProxy extends SingleChildRenderObjectWidget {
 
   final TextHeightBehavior? textHeightBehavior;
 
-  final List<SpanRender> spanRenders;
+  final List<SpanRendering> spanRenders;
 
   @override
   Text get child => super.child! as Text;
@@ -288,7 +288,7 @@ class RenderParagraphProxy extends RenderProxyBox {
     Locale? locale,
     TextWidthBasis textWidthBasis = TextWidthBasis.parent,
     TextHeightBehavior? textHeightBehavior,
-    required List<SpanRender> spanRenders,
+    required List<SpanRendering> spanRenders,
   })  : _spanRenders = spanRenders,
         _prototypePainter = TextPainter(
           text: TextSpan(text: ' ', style: textStyle),
@@ -303,7 +303,7 @@ class RenderParagraphProxy extends RenderProxyBox {
 
   final TextPainter _prototypePainter;
 
-  List<SpanRender> _spanRenders;
+  List<SpanRendering> _spanRenders;
 
   double get preferredLineHeight => _prototypePainter.preferredLineHeight;
 
@@ -373,7 +373,7 @@ class RenderParagraphProxy extends RenderProxyBox {
 
   /// 如果[_spanRenders]有变化，说明node有变化，那么[child]会markNeedsLayout
   /// 或markNeedsPaint，[_spanRenders]不关心layout，所以只需markNeedsPaint
-  set spanRenders(List<SpanRender> value) {
+  set spanRenders(List<SpanRendering> value) {
     if (listEquals(_spanRenders, value)) {
       return;
     }
@@ -393,9 +393,12 @@ class RenderParagraphProxy extends RenderProxyBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    for (SpanRender spanRender in _spanRenders) {
-      spanRender.paint(child, context, offset);
+    for (SpanRendering spanRender in _spanRenders) {
+      spanRender.beforePaint(child, context, offset);
     }
     super.paint(context, offset);
+    for (SpanRendering spanRender in _spanRenders) {
+      spanRender.afterPaint(child, context, offset);
+    }
   }
 }

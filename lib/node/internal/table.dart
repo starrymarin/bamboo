@@ -3,7 +3,7 @@ import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/json.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
-import 'package:bamboo/node/render.dart';
+import 'package:bamboo/node/rendering.dart';
 import 'package:bamboo/utils/collection.dart';
 import 'package:bamboo/utils/color.dart';
 import 'package:bamboo/widgets/scroll.dart';
@@ -43,7 +43,7 @@ class TableNode extends BlockNode {
   }();
 
   @override
-  WidgetRender<Node> createRender() => _TableWidgetRender(node: this);
+  WidgetRendering<Node> createRender() => _TableWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -55,8 +55,8 @@ class TableNode extends BlockNode {
   }
 }
 
-class _TableWidgetRender extends WidgetRender<TableNode> {
-  _TableWidgetRender({required super.node});
+class _TableWidgetRendering extends WidgetRendering<TableNode> {
+  _TableWidgetRendering({required super.node});
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +117,7 @@ class TableRowNode extends BlockNode {
   }();
 
   @override
-  WidgetRender<Node> createRender() => _TableRowWidgetRender(node: this);
+  WidgetRendering<Node> createRender() => _TableRowWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -128,8 +128,8 @@ class TableRowNode extends BlockNode {
   }
 }
 
-class _TableRowWidgetRender extends WidgetRender<TableRowNode> {
-  _TableRowWidgetRender({required super.node});
+class _TableRowWidgetRendering extends WidgetRendering<TableRowNode> {
+  _TableRowWidgetRendering({required super.node});
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +176,7 @@ class TableCellNode extends BlockNode {
   TableCellNode({required super.json});
 
   @override
-  WidgetRender<Node> createRender() => _TableCellWidgetRender(node: this);
+  WidgetRendering<Node> createRender() => _TableCellWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -187,8 +187,8 @@ class TableCellNode extends BlockNode {
   }
 }
 
-class _TableCellWidgetRender extends WidgetRender<TableCellNode> {
-  _TableCellWidgetRender({required super.node});
+class _TableCellWidgetRendering extends WidgetRendering<TableCellNode> {
+  _TableCellWidgetRendering({required super.node});
 
   @override
   Widget build(BuildContext context) {
