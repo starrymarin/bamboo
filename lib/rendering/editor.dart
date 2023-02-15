@@ -1,5 +1,6 @@
 import 'package:bamboo/bamboo.dart';
 import 'package:bamboo/rendering/cursor.dart';
+import 'package:bamboo/rendering/proxy.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -36,9 +37,13 @@ class EditorState extends State<Editor>
   Widget build(BuildContext context) {
     return _EditorScope(
       editorKey: _editorKey,
-      child: _Editor(
-        key: _editorKey,
-        child: widget.document,
+      child: GestureDetector(
+        onTapDown: saveDownDetailsForCursor,
+        onTap: showCursorByTap,
+        child: _Editor(
+          key: _editorKey,
+          child: widget.document,
+        ),
       ),
     );
   }
@@ -93,19 +98,6 @@ class _RenderDocumentProxy extends RenderProxyBox {}
 
 class EditorParentData extends ContainerBoxParentData<RenderBox> {}
 
-mixin _RenderEditorWithDocumentProxyMixin on RenderObject
-    implements RenderObjectWithChildMixin<_RenderDocumentProxy> {
-  _RenderDocumentProxy? _child;
-
-  @override
-  _RenderDocumentProxy? get child => _child;
-
-  @override
-  set child(_RenderDocumentProxy? value) {
-    _child = value;
-  }
-}
-
 ///
 /// 本质上这是一个RenderProxyBox，代理的是Document的render，通过Document的render来
 /// layout,paint等等。
@@ -115,10 +107,9 @@ mixin _RenderEditorWithDocumentProxyMixin on RenderObject
 ///
 class RenderEditor extends RenderBox
     with
-        RelayoutWhenSystemFontsChangeMixin,
         ContainerRenderObjectMixin<RenderBox, EditorParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, EditorParentData>,
-        _RenderEditorWithDocumentProxyMixin,
+        RenderObjectWithLateChildMixin<_RenderDocumentProxy>,
         RenderProxyBoxMixin<_RenderDocumentProxy>,
         RenderEditorFloatingCursorMixin {
   RenderEditor({
@@ -168,19 +159,4 @@ class RenderEditor extends RenderBox
       child.parentData = EditorParentData();
     }
   }
-}
-
-@protected
-class RenderEditorCustomPaint extends RenderBox {
-  @override
-  RenderEditor? get parent => super.parent as RenderEditor?;
-
-  @override
-  bool get isRepaintBoundary => true;
-
-  @override
-  bool get sizedByParent => true;
-
-  @override
-  Size computeDryLayout(BoxConstraints constraints) => constraints.biggest;
 }

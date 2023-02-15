@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bamboo/bamboo.dart';
 import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:bamboo/rendering/editor.dart';
+import 'package:bamboo/rendering/proxy.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -17,6 +18,8 @@ mixin EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor> {
 
   late final RenderEditorFloatingCursor _renderEditorFloatingCursor =
       _editorState.renderEditor._renderEditorFloatingCursor;
+
+  TapDownDetails? _tapDownDetails;
 
   late Animation<double> _blinkAnimation;
   late final AnimationController _blinkAnimationController = () {
@@ -44,17 +47,61 @@ mixin EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor> {
     return controller;
   }();
 
+  void saveDownDetailsForCursor(TapDownDetails downDetails) {
+    _tapDownDetails = downDetails;
+  }
+
+  void showCursorByTap() {
+    RenderParagraphProxy? paragraphProxy = _findTapDownParagraphProxy();
+    debugPrint("$paragraphProxy");
+    if (paragraphProxy == null) {
+      return;
+    }
+    RenderParagraph paragraph = paragraphProxy.child;
+    TextPosition textPosition = paragraph.getPositionForOffset(
+      _tapDownDetails!.globalPosition - paragraph.localToGlobal(Offset.zero),
+    );
+    updateFloatingCursor(paragraphProxy, textPosition);
+  }
+
+  RenderParagraphProxy? _findTapDownParagraphProxy() {
+    RenderParagraphProxy? paragraphProxy;
+    if (_tapDownDetails == null) {
+      return null;
+    } else {
+      void visitor(RenderObject child) {
+        if (child is RenderBox) {
+          Offset childOffset = child.localToGlobal(Offset.zero);
+          if ((childOffset & child.size).contains(
+              _tapDownDetails!.globalPosition)) {
+            if (child is RenderParagraphProxy) {
+              paragraphProxy = child;
+            }
+            child.visitChildren(visitor);
+          }
+        } else {
+          child.visitChildren(visitor);
+        }
+      }
+      _editorState.renderEditor.visitChildren(visitor);
+    }
+    return paragraphProxy;
+  }
+
   void updateFloatingCursor(
     RenderParagraphProxy? renderParagraphProxy,
     TextPosition? textPosition,
   ) {
     _renderEditorFloatingCursor._updateFloatingCursor(
-        renderParagraphProxy, textPosition);
+      renderParagraphProxy,
+      textPosition,
+    );
     _startBlink();
   }
 
   void hideFloatingCursor() {
     updateFloatingCursor(null, null);
+    _stopBlink();
   }
 
   void _startBlink() {
@@ -140,7 +187,7 @@ mixin RenderEditorFloatingCursorMixin on RenderBox {
 }
 
 @protected
-class RenderEditorFloatingCursor extends RenderEditorCustomPaint {
+class RenderEditorFloatingCursor extends RenderProxyBoxChild<RenderEditor> {
   RenderEditorFloatingCursor({
     required BambooTheme bambooTheme,
     required double devicePixelRatio,
