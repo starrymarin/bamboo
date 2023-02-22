@@ -21,7 +21,7 @@ class InlineCodeNode extends InlineNode {
   String get key => super.key ?? randomKey();
 
   @override
-  SpanRendering<Node> createRender() => _InlineCodeRendering(node: this);
+  SpanRendering<Node> createRendering() => _InlineCodeRendering(node: this);
 
   @override
   bool equals(Object other) {

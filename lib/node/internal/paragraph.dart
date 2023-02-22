@@ -24,7 +24,7 @@ class ParagraphNode extends BlockNode {
   }();
 
   @override
-  WidgetRendering<Node> createRender() => ParagraphWidgetRendering(node: this);
+  WidgetRendering<Node> createRendering() => ParagraphWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {

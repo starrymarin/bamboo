@@ -37,7 +37,7 @@ class TextNode extends Node implements SpanNode {
   }
 
   @override
-  NodeRendering<Node> createRender() => _TextSpanRender(node: this);
+  NodeRendering<Node> createRendering() => _TextSpanRender(node: this);
 
   @override
   void update() {

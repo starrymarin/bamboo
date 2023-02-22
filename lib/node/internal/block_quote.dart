@@ -11,7 +11,7 @@ class BlockQuoteNode extends BlockNode {
   BlockQuoteNode({required super.json});
 
   @override
-  WidgetRendering<Node> createRender() => _BlockQuoteWidgetRendering(node: this);
+  WidgetRendering<Node> createRendering() => _BlockQuoteWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {

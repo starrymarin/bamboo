@@ -43,7 +43,7 @@ class TableNode extends BlockNode {
   }();
 
   @override
-  WidgetRendering<Node> createRender() => _TableWidgetRendering(node: this);
+  WidgetRendering<Node> createRendering() => _TableWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -117,7 +117,7 @@ class TableRowNode extends BlockNode {
   }();
 
   @override
-  WidgetRendering<Node> createRender() => _TableRowWidgetRendering(node: this);
+  WidgetRendering<Node> createRendering() => _TableRowWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -176,7 +176,7 @@ class TableCellNode extends BlockNode {
   TableCellNode({required super.json});
 
   @override
-  WidgetRendering<Node> createRender() => _TableCellWidgetRendering(node: this);
+  WidgetRendering<Node> createRendering() => _TableCellWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {

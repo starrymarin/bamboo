@@ -24,10 +24,10 @@ abstract class Node with ChangeNotifier {
   final List<Node> children = [];
 
   late final NodeRendering render = () {
-    return createRender();
+    return createRendering();
   }();
 
-  NodeRendering createRender();
+  NodeRendering createRendering();
 
   void update();
 
@@ -57,7 +57,7 @@ abstract class BlockNode extends ElementNode implements WidgetNode {
   WidgetRendering get render => super.render as WidgetRendering;
 
   @override
-  WidgetRendering createRender();
+  WidgetRendering createRendering();
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +77,7 @@ abstract class InlineNode extends ElementNode implements SpanNode {
   SpanRendering get render => super.render as SpanRendering;
 
   @override
-  SpanRendering createRender();
+  SpanRendering createRendering();
 
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {

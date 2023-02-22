@@ -16,12 +16,6 @@ class Editor extends StatefulWidget {
         ?.findAncestorStateOfType<EditorState>() as EditorState;
   }
 
-  static RenderEditor renderObject(BuildContext context) {
-    _EditorScope scope =
-        context.dependOnInheritedWidgetOfExactType<_EditorScope>()!;
-    return scope._editorKey.currentContext?.findRenderObject() as RenderEditor;
-  }
-
   @override
   State<StatefulWidget> createState() => EditorState();
 }
@@ -35,14 +29,19 @@ class EditorState extends State<Editor>
 
   @override
   Widget build(BuildContext context) {
-    return _EditorScope(
-      editorKey: _editorKey,
-      child: GestureDetector(
-        onTapDown: saveDownDetailsForCursor,
-        onTap: showCursorByTap,
-        child: _Editor(
-          key: _editorKey,
-          child: widget.document,
+    CaretContainerDelegate caretContainerDelegate = CaretContainerDelegate();
+    return CaretContainer(
+      registrar: this,
+      delegate: caretContainerDelegate,
+      child: _EditorScope(
+        editorKey: _editorKey,
+        child: GestureDetector(
+          onTapDown: saveDownDetailsForCursor,
+          onTap: showCursorByTap,
+          child: _Editor(
+            key: _editorKey,
+            child: widget.document,
+          ),
         ),
       ),
     );

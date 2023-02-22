@@ -3,6 +3,7 @@ import 'dart:ui' as ui show TextHeightBehavior;
 
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/rendering.dart';
+import 'package:bamboo/rendering/cursor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
@@ -13,7 +14,8 @@ import 'package:flutter/widgets.dart';
 /// 只能在[BambooText]中调用
 ///
 class BambooTextBuildContext {
-  BambooTextBuildContext._wrap(BuildContext context) : _weakValue = WeakReference(context);
+  BambooTextBuildContext._wrap(BuildContext context)
+      : _weakValue = WeakReference(context);
 
   final WeakReference<BuildContext> _weakValue;
 
@@ -131,36 +133,45 @@ class BambooTextState extends State<BambooText> {
     }
     StrutStyle? mergedStrutStyle = StrutStyle.fromTextStyle(textStyle);
 
-    return _BambooTextStyle(
-      textStyle: textStyle,
-      child: _TextProxy(
-        textStyle: widget.style,
-        textAlign: widget.textAlign ?? TextAlign.start,
-        textDirection: widget.textDirection,
-        textScaleFactor: widget.textScaleFactor ?? 1.0,
-        locale: widget.locale,
-        strutStyle: widget.strutStyle ?? mergedStrutStyle,
-        textWidthBasis: widget.textWidthBasis ?? TextWidthBasis.parent,
-        textHeightBehavior: widget.textHeightBehavior,
-        spanRenders: widget.childNodes
-            .map((node) => node.render)
-            .whereType<SpanRendering>()
-            .toList(),
-        child: Text.rich(
-          _buildTextSpan(BambooTextBuildContext._wrap(context)),
-          style: widget.style,
-          strutStyle: widget.strutStyle ?? mergedStrutStyle,
-          textAlign: widget.textAlign,
+    CaretVisibleRegistrar caretRegistrar = CaretContainer.maybeOf(context)!;
+
+    CaretContainerDelegate caretContainerDelegate = CaretContainerDelegate();
+
+    return CaretContainer(
+      registrar: caretRegistrar,
+      delegate: caretContainerDelegate,
+      child: _BambooTextStyle(
+        textStyle: textStyle,
+        child: _TextProxy(
+          caretRegistrar: caretContainerDelegate,
+          textStyle: widget.style,
+          textAlign: widget.textAlign ?? TextAlign.start,
           textDirection: widget.textDirection,
+          textScaleFactor: widget.textScaleFactor ?? 1.0,
           locale: widget.locale,
-          softWrap: widget.softWrap,
-          overflow: widget.overflow,
-          textScaleFactor: widget.textScaleFactor,
-          maxLines: widget.maxLines,
-          semanticsLabel: widget.semanticsLabel,
-          textWidthBasis: widget.textWidthBasis,
+          strutStyle: widget.strutStyle ?? mergedStrutStyle,
+          textWidthBasis: widget.textWidthBasis ?? TextWidthBasis.parent,
           textHeightBehavior: widget.textHeightBehavior,
-          selectionColor: widget.selectionColor,
+          spanRenders: widget.childNodes
+              .map((node) => node.render)
+              .whereType<SpanRendering>()
+              .toList(),
+          child: Text.rich(
+            _buildTextSpan(BambooTextBuildContext._wrap(context)),
+            style: widget.style,
+            strutStyle: widget.strutStyle ?? mergedStrutStyle,
+            textAlign: widget.textAlign,
+            textDirection: widget.textDirection,
+            locale: widget.locale,
+            softWrap: widget.softWrap,
+            overflow: widget.overflow,
+            textScaleFactor: widget.textScaleFactor,
+            maxLines: widget.maxLines,
+            semanticsLabel: widget.semanticsLabel,
+            textWidthBasis: widget.textWidthBasis,
+            textHeightBehavior: widget.textHeightBehavior,
+            selectionColor: widget.selectionColor,
+          ),
         ),
       ),
     );
@@ -201,6 +212,7 @@ class _BambooTextStyle extends InheritedWidget {
 
 class _TextProxy extends SingleChildRenderObjectWidget {
   const _TextProxy({
+    required this.caretRegistrar,
     required Text super.child,
     this.textStyle,
     this.textAlign = TextAlign.start,
@@ -212,6 +224,8 @@ class _TextProxy extends SingleChildRenderObjectWidget {
     this.textHeightBehavior,
     required this.spanRenders,
   });
+
+  final CaretVisibleRegistrar caretRegistrar;
 
   final TextStyle? textStyle;
 
@@ -242,7 +256,8 @@ class _TextProxy extends SingleChildRenderObjectWidget {
       effectiveTextStyle = defaultTextStyle.style.merge(textStyle);
     }
     if (MediaQuery.boldTextOverride(context)) {
-      effectiveTextStyle = effectiveTextStyle!.merge(const TextStyle(fontWeight: FontWeight.bold));
+      effectiveTextStyle = effectiveTextStyle!
+          .merge(const TextStyle(fontWeight: FontWeight.bold));
     }
     return effectiveTextStyle;
   }
@@ -259,6 +274,7 @@ class _TextProxy extends SingleChildRenderObjectWidget {
       textWidthBasis: textWidthBasis,
       textHeightBehavior: textHeightBehavior,
       spanRenders: spanRenders,
+      caretRegistrar: caretRegistrar,
     );
   }
 
@@ -274,11 +290,12 @@ class _TextProxy extends SingleChildRenderObjectWidget {
       ..strutStyle = strutStyle
       ..textWidthBasis = textWidthBasis
       ..textHeightBehavior = textHeightBehavior
-      ..spanRenders = spanRenders;
+      ..spanRenders = spanRenders
+      ..caretRegistrar = caretRegistrar;
   }
 }
 
-class RenderParagraphProxy extends RenderProxyBox {
+class RenderParagraphProxy extends RenderProxyBox with CaretVisible {
   RenderParagraphProxy({
     TextStyle? textStyle,
     TextAlign textAlign = TextAlign.start,
@@ -289,6 +306,7 @@ class RenderParagraphProxy extends RenderProxyBox {
     TextWidthBasis textWidthBasis = TextWidthBasis.parent,
     TextHeightBehavior? textHeightBehavior,
     required List<SpanRendering> spanRenders,
+    required CaretVisibleRegistrar caretRegistrar,
   })  : _spanRenders = spanRenders,
         _prototypePainter = TextPainter(
           text: TextSpan(text: ' ', style: textStyle),
@@ -299,13 +317,26 @@ class RenderParagraphProxy extends RenderProxyBox {
           locale: locale,
           textWidthBasis: textWidthBasis,
           textHeightBehavior: textHeightBehavior,
-        );
+        ) {
+    this.caretRegistrar = caretRegistrar;
+  }
 
   final TextPainter _prototypePainter;
 
   List<SpanRendering> _spanRenders;
 
   double get preferredLineHeight => _prototypePainter.preferredLineHeight;
+
+  CaretVisibleRegistrar? _caretRegistrar;
+
+  set caretRegistrar(CaretVisibleRegistrar value) {
+    if (_caretRegistrar == value) {
+      return;
+    }
+    _caretRegistrar?.remove(this);
+    _caretRegistrar = value;
+    _caretRegistrar!.add(this);
+  }
 
   set textStyle(TextStyle? value) {
     if (_prototypePainter.text!.style == value) {
@@ -399,6 +430,16 @@ class RenderParagraphProxy extends RenderProxyBox {
     super.paint(context, offset);
     for (SpanRendering spanRender in _spanRenders) {
       spanRender.afterPaint(child, context, offset);
+    }
+  }
+
+  /// 如果position在这个RenderBox中，返回本身，否则返回null
+  @override
+  CaretVisible? findCaretVisible(Offset position) {
+    if (Rect.fromLTWH(0, 0, size.width, size.height).contains(position)) {
+      return this;
+    } else {
+      return null;
     }
   }
 }
