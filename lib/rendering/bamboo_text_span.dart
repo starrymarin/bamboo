@@ -1,6 +1,4 @@
-import 'package:bamboo/rendering/editor.dart';
 import 'package:bamboo/rendering/bamboo_text.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 

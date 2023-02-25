@@ -1,19 +1,23 @@
+import 'dart:async';
+
 import 'package:bamboo/bamboo.dart';
-import 'package:bamboo/rendering/cursor.dart';
+import 'package:bamboo/caret.dart';
 import 'package:bamboo/rendering/proxy.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+
+part 'cursor.dart';
 
 class Editor extends StatefulWidget {
   const Editor({super.key, required Document child}) : document = child;
 
   final Document document;
 
-  static EditorState of(BuildContext context) {
-    _EditorScope scope =
-        context.dependOnInheritedWidgetOfExactType<_EditorScope>()!;
-    return scope._editorKey.currentContext
-        ?.findAncestorStateOfType<EditorState>() as EditorState;
+  static EditorState? maybeOf(BuildContext context) {
+    _EditorScope? scope =
+        context.dependOnInheritedWidgetOfExactType<_EditorScope>();
+    return scope?._editorKey.currentContext
+        ?.findAncestorStateOfType<EditorState>();
   }
 
   @override
@@ -21,7 +25,7 @@ class Editor extends StatefulWidget {
 }
 
 class EditorState extends State<Editor>
-    with TickerProviderStateMixin<Editor>, EditorStateFloatingCursorMixin {
+    with TickerProviderStateMixin<Editor>, _EditorStateFloatingCursorMixin {
   final GlobalKey _editorKey = GlobalKey();
 
   RenderEditor get renderEditor =>
@@ -110,13 +114,13 @@ class RenderEditor extends RenderBox
         RenderBoxContainerDefaultsMixin<RenderBox, EditorParentData>,
         RenderObjectWithLateChildMixin<_RenderDocumentProxy>,
         RenderProxyBoxMixin<_RenderDocumentProxy>,
-        RenderEditorFloatingCursorMixin {
+        _RenderEditorFloatingCursorMixin {
   RenderEditor({
     required BambooTheme bambooTheme,
     required double devicePixelRatio,
   })  : _bambooTheme = bambooTheme,
         _devicePixelRatio = devicePixelRatio {
-    renderEditorFloatingCursor = RenderEditorFloatingCursor(
+    renderEditorFloatingCursor = _RenderEditorFloatingCursor(
       bambooTheme: _bambooTheme,
       devicePixelRatio: _devicePixelRatio,
     );

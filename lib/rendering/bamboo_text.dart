@@ -1,13 +1,16 @@
 import 'dart:collection';
 import 'dart:ui' as ui show TextHeightBehavior;
 
+import 'package:bamboo/bamboo.dart';
+import 'package:bamboo/caret.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/rendering.dart';
-import 'package:bamboo/rendering/cursor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+
+part 'bamboo_text_caret.dart';
 
 ///
 /// 对[BambooText.build]context的封装，构造方法声明为私有，这限制了[SpanNode.buildSpan]
@@ -156,6 +159,7 @@ class BambooTextState extends State<BambooText> {
               .map((node) => node.render)
               .whereType<SpanRendering>()
               .toList(),
+          bambooTheme: BambooTheme.of(context),
           child: Text.rich(
             _buildTextSpan(BambooTextBuildContext._wrap(context)),
             style: widget.style,
@@ -223,6 +227,7 @@ class _TextProxy extends SingleChildRenderObjectWidget {
     this.textWidthBasis = TextWidthBasis.parent,
     this.textHeightBehavior,
     required this.spanRenders,
+    required this.bambooTheme,
   });
 
   final CaretVisibleRegistrar caretRegistrar;
@@ -244,6 +249,8 @@ class _TextProxy extends SingleChildRenderObjectWidget {
   final TextHeightBehavior? textHeightBehavior;
 
   final List<SpanRendering> spanRenders;
+
+  final BambooTheme bambooTheme;
 
   @override
   Text get child => super.child! as Text;
@@ -275,6 +282,7 @@ class _TextProxy extends SingleChildRenderObjectWidget {
       textHeightBehavior: textHeightBehavior,
       spanRenders: spanRenders,
       caretRegistrar: caretRegistrar,
+      bambooTheme: bambooTheme,
     );
   }
 
@@ -291,11 +299,16 @@ class _TextProxy extends SingleChildRenderObjectWidget {
       ..textWidthBasis = textWidthBasis
       ..textHeightBehavior = textHeightBehavior
       ..spanRenders = spanRenders
-      ..caretRegistrar = caretRegistrar;
+      ..caretRegistrar = caretRegistrar
+      ..bambooTheme = bambooTheme;
   }
 }
 
-class RenderParagraphProxy extends RenderProxyBox with CaretVisible {
+class RenderParagraphProxy extends RenderProxyBox
+    with
+        _ChildRenderParagraphMixin,
+        _PrototypeTextPainterMixin,
+        _RenderParagraphProxyCursorMixin {
   RenderParagraphProxy({
     TextStyle? textStyle,
     TextAlign textAlign = TextAlign.start,
@@ -306,101 +319,24 @@ class RenderParagraphProxy extends RenderProxyBox with CaretVisible {
     TextWidthBasis textWidthBasis = TextWidthBasis.parent,
     TextHeightBehavior? textHeightBehavior,
     required List<SpanRendering> spanRenders,
+    required BambooTheme bambooTheme,
     required CaretVisibleRegistrar caretRegistrar,
-  })  : _spanRenders = spanRenders,
-        _prototypePainter = TextPainter(
-          text: TextSpan(text: ' ', style: textStyle),
-          textAlign: textAlign,
-          textDirection: textDirection,
-          textScaleFactor: textScaleFactor,
-          strutStyle: strutStyle,
-          locale: locale,
-          textWidthBasis: textWidthBasis,
-          textHeightBehavior: textHeightBehavior,
-        ) {
+  }) : _spanRenders = spanRenders {
+    _painter = TextPainter(
+      text: TextSpan(text: ' ', style: textStyle),
+      textAlign: textAlign,
+      textDirection: textDirection,
+      textScaleFactor: textScaleFactor,
+      strutStyle: strutStyle,
+      locale: locale,
+      textWidthBasis: textWidthBasis,
+      textHeightBehavior: textHeightBehavior,
+    );
     this.caretRegistrar = caretRegistrar;
+    this.bambooTheme = bambooTheme;
   }
-
-  final TextPainter _prototypePainter;
 
   List<SpanRendering> _spanRenders;
-
-  double get preferredLineHeight => _prototypePainter.preferredLineHeight;
-
-  CaretVisibleRegistrar? _caretRegistrar;
-
-  set caretRegistrar(CaretVisibleRegistrar value) {
-    if (_caretRegistrar == value) {
-      return;
-    }
-    _caretRegistrar?.remove(this);
-    _caretRegistrar = value;
-    _caretRegistrar!.add(this);
-  }
-
-  set textStyle(TextStyle? value) {
-    if (_prototypePainter.text!.style == value) {
-      return;
-    }
-    _prototypePainter.text = TextSpan(text: ' ', style: value);
-    markNeedsLayout();
-  }
-
-  set textAlign(TextAlign value) {
-    if (_prototypePainter.textAlign == value) {
-      return;
-    }
-    _prototypePainter.textAlign = value;
-    markNeedsLayout();
-  }
-
-  set textDirection(TextDirection? value) {
-    if (_prototypePainter.textDirection == value) {
-      return;
-    }
-    _prototypePainter.textDirection = value;
-    markNeedsLayout();
-  }
-
-  set textScaleFactor(double value) {
-    if (_prototypePainter.textScaleFactor == value) {
-      return;
-    }
-    _prototypePainter.textScaleFactor = value;
-    markNeedsLayout();
-  }
-
-  set strutStyle(StrutStyle? value) {
-    if (_prototypePainter.strutStyle == value) {
-      return;
-    }
-    _prototypePainter.strutStyle = value;
-    markNeedsLayout();
-  }
-
-  set locale(Locale? value) {
-    if (_prototypePainter.locale == value) {
-      return;
-    }
-    _prototypePainter.locale = value;
-    markNeedsLayout();
-  }
-
-  set textWidthBasis(TextWidthBasis value) {
-    if (_prototypePainter.textWidthBasis == value) {
-      return;
-    }
-    _prototypePainter.textWidthBasis = value;
-    markNeedsLayout();
-  }
-
-  set textHeightBehavior(TextHeightBehavior? value) {
-    if (_prototypePainter.textHeightBehavior == value) {
-      return;
-    }
-    _prototypePainter.textHeightBehavior = value;
-    markNeedsLayout();
-  }
 
   /// 如果[_spanRenders]有变化，说明node有变化，那么[child]会markNeedsLayout
   /// 或markNeedsPaint，[_spanRenders]不关心layout，所以只需markNeedsPaint
@@ -413,16 +349,6 @@ class RenderParagraphProxy extends RenderProxyBox with CaretVisible {
   }
 
   @override
-  RenderParagraph get child => super.child! as RenderParagraph;
-
-  @override
-  void performLayout() {
-    super.performLayout();
-    _prototypePainter.layout(
-        minWidth: constraints.minWidth, maxWidth: constraints.maxWidth);
-  }
-
-  @override
   void paint(PaintingContext context, Offset offset) {
     for (SpanRendering spanRender in _spanRenders) {
       spanRender.beforePaint(child, context, offset);
@@ -432,14 +358,86 @@ class RenderParagraphProxy extends RenderProxyBox with CaretVisible {
       spanRender.afterPaint(child, context, offset);
     }
   }
+}
 
-  /// 如果position在这个RenderBox中，返回本身，否则返回null
+mixin _ChildRenderParagraphMixin on RenderProxyBox {
   @override
-  CaretVisible? findCaretVisible(Offset position) {
-    if (Rect.fromLTWH(0, 0, size.width, size.height).contains(position)) {
-      return this;
-    } else {
-      return null;
+  RenderParagraph get child => super.child! as RenderParagraph;
+}
+
+mixin _PrototypeTextPainterMixin on RenderBox {
+  late TextPainter _painter;
+
+  set textStyle(TextStyle? value) {
+    if (_painter.text!.style == value) {
+      return;
     }
+    _painter.text = TextSpan(text: ' ', style: value);
+    markNeedsLayout();
+  }
+
+  set textAlign(TextAlign value) {
+    if (_painter.textAlign == value) {
+      return;
+    }
+    _painter.textAlign = value;
+    markNeedsLayout();
+  }
+
+  set textDirection(TextDirection? value) {
+    if (_painter.textDirection == value) {
+      return;
+    }
+    _painter.textDirection = value;
+    markNeedsLayout();
+  }
+
+  set textScaleFactor(double value) {
+    if (_painter.textScaleFactor == value) {
+      return;
+    }
+    _painter.textScaleFactor = value;
+    markNeedsLayout();
+  }
+
+  set strutStyle(StrutStyle? value) {
+    if (_painter.strutStyle == value) {
+      return;
+    }
+    _painter.strutStyle = value;
+    markNeedsLayout();
+  }
+
+  set locale(Locale? value) {
+    if (_painter.locale == value) {
+      return;
+    }
+    _painter.locale = value;
+    markNeedsLayout();
+  }
+
+  set textWidthBasis(TextWidthBasis value) {
+    if (_painter.textWidthBasis == value) {
+      return;
+    }
+    _painter.textWidthBasis = value;
+    markNeedsLayout();
+  }
+
+  set textHeightBehavior(TextHeightBehavior? value) {
+    if (_painter.textHeightBehavior == value) {
+      return;
+    }
+    _painter.textHeightBehavior = value;
+    markNeedsLayout();
+  }
+
+  double get preferredLineHeight => _painter.preferredLineHeight;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    _painter.layout(
+        minWidth: constraints.minWidth, maxWidth: constraints.maxWidth);
   }
 }

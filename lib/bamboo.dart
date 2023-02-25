@@ -7,12 +7,10 @@ import 'package:bamboo/node/internal/table.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/text.dart';
-import 'package:bamboo/rendering/editor.dart';
+import 'package:bamboo/editor/editor.dart';
 import 'package:bamboo/widgets/keep_alive.dart';
 import 'package:bamboo/widgets/scroll.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 class Bamboo extends StatefulWidget {
   Bamboo({
@@ -114,9 +112,6 @@ class Document extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ScrollController scrollController = ScrollController();
-    RenderEditor? renderEditor =
-        context.findAncestorRenderObjectOfType<RenderEditor>();
-    renderEditor?.setDocumentScrollController(scrollController);
     List<BlockNode> blockNodes = nodes.whereType<BlockNode>().toList();
 
     BambooTheme theme = BambooTheme.of(context);
