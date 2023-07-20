@@ -3,12 +3,12 @@ part of 'editor.dart';
 ///
 /// 是将有关浮动光标和插入符的管理混入[EditorState]的辅助类
 ///
-mixin _EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor>
+mixin _EditorStateCaretMixin on TickerProviderStateMixin<Editor>
     implements CaretVisibleRegistrar {
   EditorState get _editorState => this as EditorState;
 
-  late final _RenderEditorFloatingCursor _renderEditorFloatingCursor =
-      _editorState.renderEditor._renderEditorFloatingCursor;
+  late final _RenderEditorCaret _renderEditorCaret =
+      _editorState.renderEditor._renderEditorCaret;
 
   TapDownDetails? _tapDownDetails;
 
@@ -40,7 +40,7 @@ mixin _EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor>
     return controller;
   }();
 
-  void saveDownDetailsForCursor(TapDownDetails downDetails) {
+  void saveDownDetails(TapDownDetails downDetails) {
     _tapDownDetails = downDetails;
   }
 
@@ -61,11 +61,11 @@ mixin _EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor>
   }
 
   void updateCaret(CaretVisible? caretVisible) {
-    _renderEditorFloatingCursor._updateCaret(caretVisible);
+    _renderEditorCaret._updateCaret(caretVisible);
     _startBlink();
   }
 
-  void hideFloatingCursor() {
+  void hideCaret() {
     updateCaret(null);
     _stopBlink();
   }
@@ -82,11 +82,11 @@ mixin _EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor>
   void _stopBlink() {
     _blinkAnimationController.reset();
     _blinkAnimationController.stop();
-    _renderEditorFloatingCursor.blinkValue = 1;
+    _renderEditorCaret.blinkValue = 1;
   }
 
   void _updateBlinkValue() {
-    _renderEditorFloatingCursor.blinkValue = _blinkAnimation.value;
+    _renderEditorCaret.blinkValue = _blinkAnimation.value;
   }
 
   @override
@@ -98,19 +98,19 @@ mixin _EditorStateFloatingCursorMixin on TickerProviderStateMixin<Editor>
 }
 
 ///
-/// 是将[_RenderEditorFloatingCursor]混入[RenderEditor]的辅助类
+/// 是将[_RenderEditorCaret]混入[RenderEditor]的辅助类
 ///
-mixin _RenderEditorFloatingCursorMixin on RenderBox {
+mixin _RenderEditorCaretMixin on RenderBox {
   final List<WeakReference<ScrollPosition>> _trackedScrollPositions = [];
 
-  late _RenderEditorFloatingCursor _renderEditorFloatingCursor;
+  late _RenderEditorCaret _renderEditorCaret;
 
-  _RenderEditorFloatingCursor get renderEditorFloatingCursor =>
-      _renderEditorFloatingCursor;
+  _RenderEditorCaret get renderEditorCaret =>
+      _renderEditorCaret;
 
-  set renderEditorFloatingCursor(_RenderEditorFloatingCursor value) {
-    _renderEditorFloatingCursor = value;
-    adoptChild(_renderEditorFloatingCursor);
+  set renderEditorCaret(_RenderEditorCaret value) {
+    _renderEditorCaret = value;
+    adoptChild(_renderEditorCaret);
   }
 
   void caretTrack(ScrollPosition position) {
@@ -125,43 +125,43 @@ mixin _RenderEditorFloatingCursorMixin on RenderBox {
   }
 
   void _markCursorNeedsPaint() {
-    _renderEditorFloatingCursor.markNeedsPaint();
+    _renderEditorCaret.markNeedsPaint();
   }
 
   @override
   void attach(covariant PipelineOwner owner) {
     super.attach(owner);
-    _renderEditorFloatingCursor.attach(owner);
+    _renderEditorCaret.attach(owner);
   }
 
   @override
   void detach() {
     super.detach();
-    _renderEditorFloatingCursor.detach();
+    _renderEditorCaret.detach();
   }
 
   @override
   void markNeedsPaint() {
     super.markNeedsPaint();
-    _renderEditorFloatingCursor.markNeedsPaint();
+    _renderEditorCaret.markNeedsPaint();
   }
 
   @override
   void performLayout() {
-    _renderEditorFloatingCursor.layout(constraints);
+    _renderEditorCaret.layout(constraints);
     super.performLayout();
   }
 
   @override
   void paint(PaintingContext context, Offset offset) {
     super.paint(context, offset);
-    context.paintChild(_renderEditorFloatingCursor, offset);
+    context.paintChild(_renderEditorCaret, offset);
   }
 
   @override
   void dispose() {
     super.dispose();
-    _renderEditorFloatingCursor.dispose();
+    _renderEditorCaret.dispose();
     for (final trackedScrollPosition in _trackedScrollPositions) {
       trackedScrollPosition.target?.removeListener(_markCursorNeedsPaint);
     }
@@ -171,8 +171,8 @@ mixin _RenderEditorFloatingCursorMixin on RenderBox {
 ///
 /// 用来绘制浮动光标和插入符的RenderObject，是[RenderEditor]的child
 ///
-class _RenderEditorFloatingCursor extends RenderProxyBoxChild<RenderEditor> {
-  _RenderEditorFloatingCursor({
+class _RenderEditorCaret extends RenderProxyBoxChild<RenderEditor> {
+  _RenderEditorCaret({
     required BambooTheme bambooTheme,
     required double devicePixelRatio,
   })  : _bambooTheme = bambooTheme,

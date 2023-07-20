@@ -6,7 +6,7 @@ import 'package:bamboo/rendering/proxy.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-part 'cursor.dart';
+part 'caret.dart';
 
 class Editor extends StatefulWidget {
   const Editor({super.key, required Document child}) : document = child;
@@ -25,7 +25,7 @@ class Editor extends StatefulWidget {
 }
 
 class EditorState extends State<Editor>
-    with TickerProviderStateMixin<Editor>, _EditorStateFloatingCursorMixin {
+    with TickerProviderStateMixin<Editor>, _EditorStateCaretMixin {
   final GlobalKey _editorKey = GlobalKey();
 
   RenderEditor get renderEditor =>
@@ -40,7 +40,7 @@ class EditorState extends State<Editor>
       child: _EditorScope(
         editorKey: _editorKey,
         child: GestureDetector(
-          onTapDown: saveDownDetailsForCursor,
+          onTapDown: saveDownDetails,
           onTap: showCursorByTap,
           child: _Editor(
             key: _editorKey,
@@ -114,13 +114,13 @@ class RenderEditor extends RenderBox
         RenderBoxContainerDefaultsMixin<RenderBox, EditorParentData>,
         RenderObjectWithLateChildMixin<_RenderDocumentProxy>,
         RenderProxyBoxMixin<_RenderDocumentProxy>,
-        _RenderEditorFloatingCursorMixin {
+        _RenderEditorCaretMixin {
   RenderEditor({
     required BambooTheme bambooTheme,
     required double devicePixelRatio,
   })  : _bambooTheme = bambooTheme,
         _devicePixelRatio = devicePixelRatio {
-    renderEditorFloatingCursor = _RenderEditorFloatingCursor(
+    renderEditorCaret = _RenderEditorCaret(
       bambooTheme: _bambooTheme,
       devicePixelRatio: _devicePixelRatio,
     );
@@ -133,7 +133,7 @@ class RenderEditor extends RenderBox
       return;
     }
     _bambooTheme = value;
-    renderEditorFloatingCursor.bambooTheme = _bambooTheme;
+    renderEditorCaret.bambooTheme = _bambooTheme;
     markNeedsPaint();
   }
 
@@ -144,7 +144,7 @@ class RenderEditor extends RenderBox
       return;
     }
     _devicePixelRatio = value;
-    renderEditorFloatingCursor.devicePixelRatio = _devicePixelRatio;
+    renderEditorCaret.devicePixelRatio = _devicePixelRatio;
     markNeedsLayout();
   }
 
