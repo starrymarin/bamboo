@@ -67,7 +67,7 @@ mixin _RenderParagraphProxyCursorMixin
     }
     Offset offset = _positionWhenFound!;
     Rect caretPrototype = _caretPrototype!;
-    RenderParagraph paragraph = child;
+    RenderParagraph paragraph = _renderParagraph;
     TextPosition textPosition = paragraph.getPositionForOffset(offset);
     Offset caretOffset =
     paragraph.getOffsetForCaret(textPosition, caretPrototype);

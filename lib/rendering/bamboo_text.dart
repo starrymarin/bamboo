@@ -351,18 +351,29 @@ class RenderParagraphProxy extends RenderProxyBox
   @override
   void paint(PaintingContext context, Offset offset) {
     for (SpanRendering spanRender in _spanRenders) {
-      spanRender.beforePaint(child, context, offset);
+      spanRender.beforePaint(_renderParagraph, context, offset);
     }
     super.paint(context, offset);
     for (SpanRendering spanRender in _spanRenders) {
-      spanRender.afterPaint(child, context, offset);
+      spanRender.afterPaint(_renderParagraph, context, offset);
     }
   }
 }
 
 mixin _ChildRenderParagraphMixin on RenderProxyBox {
-  @override
-  RenderParagraph get child => super.child! as RenderParagraph;
+  late final RenderParagraph _renderParagraph = () {
+    return _findRenderParagraph(child);
+  }();
+
+  RenderParagraph _findRenderParagraph(RenderObject? renderObject) {
+    if (renderObject is RenderParagraph) {
+      return renderObject;
+    } else if (renderObject is RenderObjectWithChildMixin) {
+      return _findRenderParagraph(renderObject.child);
+    } else {
+      throw Exception();
+    }
+  }
 }
 
 mixin _PrototypeTextPainterMixin on RenderBox {

@@ -1,103 +1,6 @@
 part of 'editor.dart';
 
 ///
-/// 是将有关浮动光标和插入符的管理混入[EditorState]的辅助类
-///
-mixin _EditorStateCaretMixin on TickerProviderStateMixin<Editor>
-    implements CaretVisibleRegistrar {
-  EditorState get _editorState => this as EditorState;
-
-  late final _RenderEditorCaret _renderEditorCaret =
-      _editorState.renderEditor._renderEditorCaret;
-
-  TapDownDetails? _tapDownDetails;
-
-  CaretVisible? _entranceCursorVisible;
-
-  late Animation<double> _blinkAnimation;
-  late final AnimationController _blinkAnimationController = () {
-    AnimationController controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    );
-    _blinkAnimation = TweenSequence([
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 25),
-      TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 0.0).chain(
-          CurveTween(curve: Curves.easeOut),
-        ),
-        weight: 25,
-      ),
-      TweenSequenceItem(tween: ConstantTween(0.0), weight: 25),
-      TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: 1.0).chain(
-          CurveTween(curve: Curves.easeOut),
-        ),
-        weight: 25,
-      ),
-    ]).animate(controller);
-    _blinkAnimation.addListener(_updateBlinkValue);
-    return controller;
-  }();
-
-  void saveDownDetails(TapDownDetails downDetails) {
-    _tapDownDetails = downDetails;
-  }
-
-  void showCursorByTap() {
-    CaretVisible? effectiveCursorVisible = _entranceCursorVisible
-        ?.findCaretVisible(_tapDownDetails!.localPosition);
-    updateCaret(effectiveCursorVisible);
-  }
-
-  @override
-  void add(CaretVisible cursorVisible) {
-    _entranceCursorVisible = cursorVisible;
-  }
-
-  @override
-  void remove(CaretVisible cursorVisible) {
-    _entranceCursorVisible = null;
-  }
-
-  void updateCaret(CaretVisible? caretVisible) {
-    _renderEditorCaret._updateCaret(caretVisible);
-    _startBlink();
-  }
-
-  void hideCaret() {
-    updateCaret(null);
-    _stopBlink();
-  }
-
-  void _startBlink() {
-    if (_blinkAnimationController.isAnimating) {
-      _stopBlink();
-    }
-    Timer(const Duration(milliseconds: 500), () {
-      _blinkAnimationController.repeat();
-    });
-  }
-
-  void _stopBlink() {
-    _blinkAnimationController.reset();
-    _blinkAnimationController.stop();
-    _renderEditorCaret.blinkValue = 1;
-  }
-
-  void _updateBlinkValue() {
-    _renderEditorCaret.blinkValue = _blinkAnimation.value;
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _blinkAnimation.removeListener(_updateBlinkValue);
-    _blinkAnimationController.dispose();
-  }
-}
-
-///
 /// 是将[_RenderEditorCaret]混入[RenderEditor]的辅助类
 ///
 mixin _RenderEditorCaretMixin on RenderBox {
@@ -212,9 +115,7 @@ class _RenderEditorCaret extends RenderProxyBoxChild<RenderEditor> {
 
   void _updateCaret(CaretVisible? caretVisible) {
     _caretVisible = caretVisible;
-    if (_caretVisible != null) {
-      markNeedsPaint();
-    }
+    markNeedsPaint();
   }
 
   // Computes the offset to apply to the given [sourceOffset] so it perfectly
