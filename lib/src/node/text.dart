@@ -7,13 +7,13 @@ import 'package:bamboo/utils.dart';
 
 import 'internal/json.dart';
 import 'node.dart';
-import 'rendering.dart';
+import 'graphics.dart';
 
 class TextNode extends Node implements SpanNode {
   TextNode({required super.json});
 
   @override
-  SpanRendering get render => super.render as SpanRendering;
+  SpanGraphics get graphics => super.graphics as SpanGraphics;
 
   late String text = json[JsonKey.text] ?? "";
 
@@ -34,11 +34,11 @@ class TextNode extends Node implements SpanNode {
 
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
-    return render.buildSpan(bambooTextBuildContext);
+    return graphics.buildSpan(bambooTextBuildContext);
   }
 
   @override
-  NodeRendering<Node> createRendering() => _TextSpanRender(node: this);
+  NodeGraphics<Node> createGraphics() => _TextSpanRender(node: this);
 
   @override
   void update() {
@@ -61,7 +61,7 @@ class TextNode extends Node implements SpanNode {
   }
 }
 
-class _TextSpanRender extends SpanRendering<TextNode> {
+class _TextSpanRender extends SpanGraphics<TextNode> {
   _TextSpanRender({required super.node});
 
   @override

@@ -167,9 +167,9 @@ class BambooTextState extends State<BambooText> {
       selectionColor: widget.selectionColor ??
           DefaultSelectionStyle.of(context).selectionColor ??
           DefaultSelectionStyle.defaultColor,
-      spanRenders: widget.childNodes
-          .map((node) => node.render)
-          .whereType<SpanRendering>()
+      spanGraphicsList: widget.childNodes
+          .map((node) => node.graphics)
+          .whereType<SpanGraphics>()
           .toList(),
     );
     if (registrar != null) {
@@ -307,7 +307,7 @@ class _BambooRichText extends MultiChildRenderObjectWidget {
     this.textHeightBehavior,
     this.selectionRegistrar,
     this.selectionColor,
-    required this.spanRenders,
+    required this.spanGraphicsList,
   }) : super(children: WidgetSpan.extractFromInlineSpan(text, textScaleFactor));
 
   final InlineSpan text;
@@ -336,7 +336,7 @@ class _BambooRichText extends MultiChildRenderObjectWidget {
 
   final Color? selectionColor;
 
-  final List<SpanRendering> spanRenders;
+  final List<SpanGraphics> spanGraphicsList;
 
   @override
   RenderObject createRenderObject(BuildContext context) {
@@ -354,7 +354,7 @@ class _BambooRichText extends MultiChildRenderObjectWidget {
       locale: locale ?? Localizations.maybeLocaleOf(context),
       registrar: selectionRegistrar,
       selectionColor: selectionColor,
-      spanRenders: spanRenders,
+      spanGraphicsList: spanGraphicsList,
     );
   }
 
@@ -375,7 +375,7 @@ class _BambooRichText extends MultiChildRenderObjectWidget {
       ..locale = locale ?? Localizations.maybeLocaleOf(context)
       ..registrar = selectionRegistrar
       ..selectionColor = selectionColor
-      ..spanRenders = spanRenders;
+      ..spanGraphicsList = spanGraphicsList;
   }
 }
 
@@ -395,18 +395,18 @@ class _RenderBambooParagraph extends RenderBambooParagraph {
     super.children,
     super.selectionColor,
     super.registrar,
-    required List<SpanRendering> spanRenders,
-  }) : _spanRenders = spanRenders;
+    required List<SpanGraphics> spanGraphicsList,
+  }) : _spanGraphicsList = spanGraphicsList;
 
-  List<SpanRendering> _spanRenders;
+  List<SpanGraphics> _spanGraphicsList;
 
-  /// 如果[_spanRenders]有变化，说明node有变化，那么[child]会markNeedsLayout
-  /// 或markNeedsPaint，[_spanRenders]不关心layout，所以只需markNeedsPaint
-  set spanRenders(List<SpanRendering> value) {
-    if (listEquals(_spanRenders, value)) {
+  /// 如果[_spanGraphicsList]有变化，说明node有变化，那么[child]会markNeedsLayout
+  /// 或markNeedsPaint，[_spanGraphicsList]不关心layout，所以只需markNeedsPaint
+  set spanGraphicsList(List<SpanGraphics> value) {
+    if (listEquals(_spanGraphicsList, value)) {
       return;
     }
-    _spanRenders = value;
+    _spanGraphicsList = value;
     markNeedsPaint();
   }
 
@@ -417,11 +417,11 @@ class _RenderBambooParagraph extends RenderBambooParagraph {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    for (SpanRendering spanRender in _spanRenders) {
+    for (SpanGraphics spanRender in _spanGraphicsList) {
       spanRender.beforePaint(this, context, offset);
     }
     super.paint(context, offset);
-    for (SpanRendering spanRender in _spanRenders) {
+    for (SpanGraphics spanRender in _spanGraphicsList) {
       spanRender.afterPaint(this, context, offset);
     }
   }

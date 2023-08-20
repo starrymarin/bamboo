@@ -2,7 +2,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../node.dart';
-import '../rendering.dart';
+import '../graphics.dart';
 import 'paragraph.dart';
 import 'type.dart';
 
@@ -13,7 +13,7 @@ class BlockQuoteNode extends BlockNode {
   BlockQuoteNode({required super.json});
 
   @override
-  WidgetRendering<Node> createRendering() => _BlockQuoteWidgetRendering(node: this);
+  WidgetGraphics<Node> createGraphics() => _BlockQuoteWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -24,7 +24,7 @@ class BlockQuoteNode extends BlockNode {
   }
 }
 
-class _BlockQuoteWidgetRendering extends WidgetRendering<BlockQuoteNode> {
+class _BlockQuoteWidgetRendering extends WidgetGraphics<BlockQuoteNode> {
   _BlockQuoteWidgetRendering({required super.node});
 
   @override

@@ -4,8 +4,8 @@ import 'package:bamboo/text.dart';
 
 import 'node.dart';
 
-abstract class NodeRendering<T extends Node> {
-  const NodeRendering({required this.node});
+abstract class NodeGraphics<T extends Node> {
+  const NodeGraphics({required this.node});
 
   final T node;
 
@@ -15,21 +15,21 @@ abstract class NodeRendering<T extends Node> {
       return false;
     }
 
-    return node == (other as NodeRendering).node;
+    return node == (other as NodeGraphics).node;
   }
 
   @override
   int get hashCode => node.hashCode;
 }
 
-abstract class WidgetRendering<T extends Node> extends NodeRendering<T> {
-  WidgetRendering({required super.node});
+abstract class WidgetGraphics<T extends Node> extends NodeGraphics<T> {
+  WidgetGraphics({required super.node});
 
   Widget build(BuildContext context);
 }
 
-abstract class SpanRendering<T extends Node> extends NodeRendering<T> {
-  SpanRendering({required super.node});
+abstract class SpanGraphics<T extends Node> extends NodeGraphics<T> {
+  SpanGraphics({required super.node});
 
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext);
 

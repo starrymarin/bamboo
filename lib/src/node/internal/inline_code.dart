@@ -8,7 +8,7 @@ import 'package:bamboo/text.dart';
 import 'package:bamboo/utils.dart';
 
 import '../node.dart';
-import '../rendering.dart';
+import '../graphics.dart';
 import 'type.dart';
 
 class InlineCodeNode extends InlineNode {
@@ -23,7 +23,7 @@ class InlineCodeNode extends InlineNode {
   String get key => super.key ?? randomKey();
 
   @override
-  SpanRendering<Node> createRendering() => _InlineCodeRendering(node: this);
+  SpanGraphics<Node> createGraphics() => _InlineCodeRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -34,7 +34,7 @@ class InlineCodeNode extends InlineNode {
   }
 }
 
-class _InlineCodeRendering extends SpanRendering<InlineCodeNode> {
+class _InlineCodeRendering extends SpanGraphics<InlineCodeNode> {
   _InlineCodeRendering({required super.node});
 
   @override
@@ -70,7 +70,7 @@ class _InlineCodeRendering extends SpanRendering<InlineCodeNode> {
         alignment: PlaceholderAlignment.baseline,
         child: NodeWidget(
           node: node,
-          widgetRender: _InlineCodeWidgetRender(node: node),
+          widgetGraphics: _InlineCodeWidgetRender(node: node),
         ),
       );
     }
@@ -219,7 +219,7 @@ class _InlineCodeEdgeLabel extends StatelessWidget {
   }
 }
 
-class _InlineCodeWidgetRender extends WidgetRendering<InlineCodeNode> {
+class _InlineCodeWidgetRender extends WidgetGraphics<InlineCodeNode> {
   _InlineCodeWidgetRender({required super.node});
 
   @override

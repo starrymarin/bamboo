@@ -4,7 +4,7 @@ import 'package:bamboo/constants.dart';
 import 'package:bamboo/utils.dart';
 
 import '../node.dart';
-import '../rendering.dart';
+import '../graphics.dart';
 import 'json.dart';
 import 'type.dart';
 
@@ -42,7 +42,7 @@ class TableNode extends BlockNode {
   }();
 
   @override
-  WidgetRendering<Node> createRendering() => _TableWidgetRendering(node: this);
+  WidgetGraphics<Node> createGraphics() => _TableWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -54,7 +54,7 @@ class TableNode extends BlockNode {
   }
 }
 
-class _TableWidgetRendering extends WidgetRendering<TableNode> {
+class _TableWidgetRendering extends WidgetGraphics<TableNode> {
   _TableWidgetRendering({required super.node});
 
   @override
@@ -116,7 +116,7 @@ class TableRowNode extends BlockNode {
   }();
 
   @override
-  WidgetRendering<Node> createRendering() => _TableRowWidgetRendering(node: this);
+  WidgetGraphics<Node> createGraphics() => _TableRowWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -127,7 +127,7 @@ class TableRowNode extends BlockNode {
   }
 }
 
-class _TableRowWidgetRendering extends WidgetRendering<TableRowNode> {
+class _TableRowWidgetRendering extends WidgetGraphics<TableRowNode> {
   _TableRowWidgetRendering({required super.node});
 
   @override
@@ -175,7 +175,7 @@ class TableCellNode extends BlockNode {
   TableCellNode({required super.json});
 
   @override
-  WidgetRendering<Node> createRendering() => _TableCellWidgetRendering(node: this);
+  WidgetGraphics<Node> createGraphics() => _TableCellWidgetRendering(node: this);
 
   @override
   bool equals(Object other) {
@@ -186,7 +186,7 @@ class TableCellNode extends BlockNode {
   }
 }
 
-class _TableCellWidgetRendering extends WidgetRendering<TableCellNode> {
+class _TableCellWidgetRendering extends WidgetGraphics<TableCellNode> {
   _TableCellWidgetRendering({required super.node});
 
   @override

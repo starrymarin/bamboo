@@ -4,7 +4,7 @@ import 'package:bamboo/text.dart';
 import 'package:bamboo/utils.dart';
 
 import 'internal/json.dart';
-import 'rendering.dart';
+import 'graphics.dart';
 
 typedef NodeJson = Map<String, dynamic>;
 
@@ -25,11 +25,11 @@ abstract class Node with ChangeNotifier {
 
   final List<Node> children = [];
 
-  late final NodeRendering render = () {
-    return createRendering();
+  late final NodeGraphics graphics = () {
+    return createGraphics();
   }();
 
-  NodeRendering createRendering();
+  NodeGraphics createGraphics();
 
   void update();
 
@@ -56,14 +56,14 @@ abstract class BlockNode extends ElementNode implements WidgetNode {
   BlockNode({required super.json});
 
   @override
-  WidgetRendering get render => super.render as WidgetRendering;
+  WidgetGraphics get graphics => super.graphics as WidgetGraphics;
 
   @override
-  WidgetRendering createRendering();
+  WidgetGraphics createGraphics();
 
   @override
   Widget build(BuildContext context) {
-    return NodeWidget(node: this, widgetRender: render);
+    return NodeWidget(node: this, widgetGraphics: graphics);
   }
 
   @override
@@ -76,14 +76,14 @@ abstract class InlineNode extends ElementNode implements SpanNode {
   InlineNode({required super.json});
 
   @override
-  SpanRendering get render => super.render as SpanRendering;
+  SpanGraphics get graphics => super.graphics as SpanGraphics;
 
   @override
-  SpanRendering createRendering();
+  SpanGraphics createGraphics();
 
   @override
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext) {
-    return render.buildSpan(bambooTextBuildContext);
+    return graphics.buildSpan(bambooTextBuildContext);
   }
 
   @override
@@ -93,19 +93,19 @@ abstract class InlineNode extends ElementNode implements SpanNode {
 }
 
 ///
-/// [WidgetNode]会被对应到[NodeWidget]，这个widget会使用[WidgetRendering]构建真正展示
+/// [WidgetNode]会被对应到[NodeWidget]，这个widget会使用[WidgetGraphics]构建真正展示
 /// 的Widget，而[NodeWidget]的作用是监听[Node.update]，以此重新构建widget
 ///
 class NodeWidget extends StatefulWidget {
   const NodeWidget({
     super.key,
     required this.node,
-    required this.widgetRender,
+    required this.widgetGraphics,
   });
 
   final Node node;
 
-  final WidgetRendering widgetRender;
+  final WidgetGraphics widgetGraphics;
 
   @override
   State<StatefulWidget> createState() => NodeWidgetState();
@@ -120,7 +120,7 @@ class NodeWidgetState extends State<NodeWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.widgetRender.build(context);
+    return widget.widgetGraphics.build(context);
   }
 
   void _update() {

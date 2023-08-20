@@ -5,5 +5,5 @@ export 'src/node/internal/paragraph.dart';
 export 'src/node/internal/table.dart';
 export 'src/node/internal/type.dart';
 export 'src/node/node.dart';
-export 'src/node/rendering.dart';
+export 'src/node/graphics.dart';
 export 'src/node/text.dart';
