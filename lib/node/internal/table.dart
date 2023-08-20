@@ -1,13 +1,13 @@
-import 'package:bamboo/bamboo.dart';
-import 'package:bamboo/constants.dart';
-import 'package:bamboo/node/internal/json.dart';
-import 'package:bamboo/node/internal/type.dart';
-import 'package:bamboo/node/node.dart';
-import 'package:bamboo/node/rendering.dart';
-import 'package:bamboo/utils/collection.dart';
-import 'package:bamboo/utils/color.dart';
-import 'package:bamboo/widgets/scroll.dart';
 import 'package:flutter/material.dart';
+
+import '../../constants.dart';
+import '../../utils/collection.dart';
+import '../../utils/color.dart';
+import '../../widgets/scroll.dart';
+import '../node.dart';
+import '../rendering.dart';
+import 'json.dart';
+import 'type.dart';
 
 class TableNode extends BlockNode {
   TableNode({required super.json});
@@ -203,7 +203,7 @@ class _TableCellWidgetRendering extends WidgetRendering<TableCellNode> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(8),
-      color: (node.json[JsonKey.tableCellBackgroundColor] as String?).toColor(),
+      color: (node.json[JsonKey.tableCellBackgroundColor] as String?)?.toColor(),
       child: IntrinsicHeight(
         child: Column(
           children: childrenWidgets,

@@ -1,8 +1,8 @@
-import 'package:bamboo/node/node.dart';
-import 'package:bamboo/rendering/bamboo_paragraph.dart';
-import 'package:bamboo/rendering/bamboo_text.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+
+import '../rendering/bamboo_paragraph.dart';
+import '../rendering/bamboo_text.dart';
+import 'node.dart';
 
 abstract class NodeRendering<T extends Node> {
   const NodeRendering({required this.node});

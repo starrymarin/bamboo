@@ -1,13 +1,12 @@
 import 'dart:async';
 
-import 'package:bamboo/bamboo.dart';
-import 'package:bamboo/caret.dart';
-import 'package:bamboo/rendering/proxy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 
-part 'caret.dart';
+import '../bamboo.dart';
+import '../caret.dart';
+import '../rendering/proxy.dart';
+import 'caret.dart';
 
 class Editor extends StatefulWidget {
   const Editor({super.key, required Document child}) : document = child;
@@ -32,7 +31,7 @@ class EditorState extends State<Editor>
   RenderEditor get renderEditor =>
       _editorKey.currentContext?.findRenderObject() as RenderEditor;
 
-  _RenderEditorCaret get _renderEditorCaret => renderEditor._renderEditorCaret;
+  RenderEditorCaret get _renderEditorCaret => renderEditor.renderEditorCaret;
 
   TapDownDetails? _tapDownDetails;
 
@@ -95,11 +94,11 @@ class EditorState extends State<Editor>
             ?.findCaretVisible(tapDownDetails.localPosition);
       }
       if (effectiveCaretVisible != null) {
-        _renderEditorCaret._updateCaret(effectiveCaretVisible);
+        _renderEditorCaret.updateCaret(effectiveCaretVisible);
         _startBlink();
       }
     } else {
-      _renderEditorCaret._updateCaret(null);
+      _renderEditorCaret.updateCaret(null);
       _stopBlink();
       _tapDownDetails = null;
     }
@@ -231,13 +230,13 @@ class RenderEditor extends RenderBox
         RenderBoxContainerDefaultsMixin<RenderBox, EditorParentData>,
         RenderObjectWithLateChildMixin<_RenderDocumentProxy>,
         RenderProxyBoxMixin<_RenderDocumentProxy>,
-        _RenderEditorCaretMixin {
+        RenderEditorCaretMixin {
   RenderEditor({
     required BambooTheme bambooTheme,
     required double devicePixelRatio,
   })  : _bambooTheme = bambooTheme,
         _devicePixelRatio = devicePixelRatio {
-    renderEditorCaret = _RenderEditorCaret(
+    renderEditorCaret = RenderEditorCaret(
       bambooTheme: _bambooTheme,
       devicePixelRatio: _devicePixelRatio,
     );

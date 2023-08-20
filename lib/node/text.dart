@@ -1,12 +1,13 @@
-import 'package:bamboo/bamboo.dart';
-import 'package:bamboo/node/internal/json.dart';
-import 'package:bamboo/node/rendering.dart';
-import 'package:bamboo/rendering/bamboo_text.dart';
-import 'package:bamboo/rendering/bamboo_text_span.dart';
-import 'package:bamboo/utils/color.dart';
-import 'package:bamboo/node/node.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+
+import '../bamboo.dart';
+import '../rendering/bamboo_text.dart';
+import '../rendering/bamboo_text_span.dart';
+import 'internal/json.dart';
+import 'node.dart';
+import 'rendering.dart';
+import '../../../utils/color.dart';
 
 class TextNode extends Node implements SpanNode {
   TextNode({required super.json});

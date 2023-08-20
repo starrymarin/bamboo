@@ -1,8 +1,10 @@
-import 'package:bamboo/node/internal/paragraph.dart';
-import 'package:bamboo/node/internal/type.dart';
-import 'package:bamboo/node/node.dart';
-import 'package:bamboo/node/rendering.dart';
+
 import 'package:flutter/widgets.dart';
+
+import '../node.dart';
+import '../rendering.dart';
+import 'paragraph.dart';
+import 'type.dart';
 
 ///
 /// 目前认为block-quote里面只有blockNode，如果出现非BlockNode将会被忽略

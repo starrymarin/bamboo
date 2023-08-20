@@ -1,14 +1,15 @@
 import 'dart:ui';
 
-import 'package:bamboo/constants.dart';
-import 'package:bamboo/node/internal/type.dart';
-import 'package:bamboo/node/node.dart';
-import 'package:bamboo/node/rendering.dart';
-import 'package:bamboo/rendering/bamboo_paragraph.dart';
-import 'package:bamboo/rendering/bamboo_text.dart';
-import 'package:bamboo/utils/key.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+
+import '../../constants.dart';
+import '../../rendering/bamboo_paragraph.dart';
+import '../../rendering/bamboo_text.dart';
+import '../../utils/key.dart';
+import '../node.dart';
+import '../rendering.dart';
+import 'type.dart';
 
 class InlineCodeNode extends InlineNode {
   InlineCodeNode({

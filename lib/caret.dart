@@ -1,5 +1,7 @@
-import 'package:bamboo/editor/editor.dart';
+
 import 'package:flutter/widgets.dart';
+
+import 'editor/editor.dart';
 
 abstract class CaretVisibleFinder {
   /// 查找落点所在的[CaretVisible]，如果此对象是一个[RenderObject]，那么[position]就是

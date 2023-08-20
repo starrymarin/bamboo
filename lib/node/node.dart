@@ -1,9 +1,9 @@
-import 'package:bamboo/node/rendering.dart';
-import 'package:bamboo/rendering/bamboo_text.dart';
-import 'package:bamboo/utils/collection.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:bamboo/node/internal/json.dart';
+
+import '../rendering/bamboo_text.dart';
+import '../utils/collection.dart';
+import 'internal/json.dart';
+import 'rendering.dart';
 
 typedef NodeJson = Map<String, dynamic>;
 

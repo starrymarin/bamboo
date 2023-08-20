@@ -1,16 +1,17 @@
-import 'package:bamboo/constants.dart';
-import 'package:bamboo/node/internal/block_quote.dart';
-import 'package:bamboo/node/internal/inline_code.dart';
-import 'package:bamboo/node/internal/json.dart';
-import 'package:bamboo/node/internal/paragraph.dart';
-import 'package:bamboo/node/internal/table.dart';
-import 'package:bamboo/node/internal/type.dart';
-import 'package:bamboo/node/node.dart';
-import 'package:bamboo/node/text.dart';
-import 'package:bamboo/editor/editor.dart';
-import 'package:bamboo/widgets/keep_alive.dart';
-import 'package:bamboo/widgets/scroll.dart';
 import 'package:flutter/material.dart';
+
+import 'constants.dart';
+import 'editor/editor.dart';
+import 'node/internal/block_quote.dart';
+import 'node/internal/inline_code.dart';
+import 'node/internal/json.dart';
+import 'node/internal/paragraph.dart';
+import 'node/internal/table.dart';
+import 'node/internal/type.dart';
+import 'node/node.dart';
+import 'node/text.dart';
+import 'widgets/keep_alive.dart';
+import 'widgets/scroll.dart';
 
 class Bamboo extends StatefulWidget {
   Bamboo({

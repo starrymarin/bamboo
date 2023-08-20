@@ -1,18 +1,15 @@
 import 'dart:collection';
 import 'dart:ui' as ui;
 
-import 'package:bamboo/bamboo.dart';
-import 'package:bamboo/caret.dart';
-import 'package:bamboo/node/node.dart';
-import 'package:bamboo/node/rendering.dart';
-import 'package:bamboo/rendering/bamboo_paragraph.dart';
-import 'package:bamboo/rendering/bamboo_text_span.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-part 'bamboo_text_caret.dart';
+import '../caret.dart';
+import '../node/node.dart';
+import '../node/rendering.dart';
+import 'bamboo_paragraph.dart';
 
 ///
 /// 对[BambooText.build]context的封装，构造方法声明为私有，这限制了[SpanNode.buildSpan]
@@ -278,8 +275,8 @@ class _BambooTextStyle extends InheritedWidget {
   }
 }
 
-mixin _ChildRenderParagraphMixin on RenderProxyBox {
-  late final RenderBambooParagraph _renderParagraph = () {
+mixin ChildRenderParagraphMixin on RenderProxyBox {
+  late final RenderBambooParagraph renderParagraph = () {
     return _findRenderParagraph(child);
   }();
 

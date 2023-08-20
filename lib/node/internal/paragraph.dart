@@ -1,10 +1,11 @@
-import 'package:bamboo/node/rendering.dart';
-import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:flutter/widgets.dart';
-import 'package:bamboo/node/internal/json.dart';
-import 'package:bamboo/node/internal/type.dart';
-import 'package:bamboo/node/node.dart';
-import 'package:bamboo/node/text.dart';
+
+import '../../rendering/bamboo_text.dart';
+import '../node.dart';
+import '../rendering.dart';
+import '../text.dart';
+import 'json.dart';
+import 'type.dart';
 
 class ParagraphNode extends BlockNode {
   ParagraphNode({

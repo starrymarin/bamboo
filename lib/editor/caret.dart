@@ -1,17 +1,23 @@
-part of 'editor.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
+
+import '../bamboo.dart';
+import '../caret.dart';
+import '../rendering/proxy.dart';
+import 'editor.dart';
 
 ///
-/// 是将[_RenderEditorCaret]混入[RenderEditor]的辅助类
+/// 是将[RenderEditorCaret]混入[RenderEditor]的辅助类
 ///
-mixin _RenderEditorCaretMixin on RenderBox {
+mixin RenderEditorCaretMixin on RenderBox {
   final List<WeakReference<ScrollPosition>> _trackedScrollPositions = [];
 
-  late _RenderEditorCaret _renderEditorCaret;
+  late RenderEditorCaret _renderEditorCaret;
 
-  _RenderEditorCaret get renderEditorCaret =>
+  RenderEditorCaret get renderEditorCaret =>
       _renderEditorCaret;
 
-  set renderEditorCaret(_RenderEditorCaret value) {
+  set renderEditorCaret(RenderEditorCaret value) {
     _renderEditorCaret = value;
     adoptChild(_renderEditorCaret);
   }
@@ -74,8 +80,8 @@ mixin _RenderEditorCaretMixin on RenderBox {
 ///
 /// 用来绘制浮动光标和插入符的RenderObject，是[RenderEditor]的child
 ///
-class _RenderEditorCaret extends RenderProxyBoxChild<RenderEditor> {
-  _RenderEditorCaret({
+class RenderEditorCaret extends RenderProxyBoxChild<RenderEditor> {
+  RenderEditorCaret({
     required BambooTheme bambooTheme,
     required double devicePixelRatio,
   })  : _bambooTheme = bambooTheme,
@@ -113,7 +119,7 @@ class _RenderEditorCaret extends RenderProxyBoxChild<RenderEditor> {
 
   CaretVisible? _caretVisible;
 
-  void _updateCaret(CaretVisible? caretVisible) {
+  void updateCaret(CaretVisible? caretVisible) {
     _caretVisible = caretVisible;
     markNeedsPaint();
   }

@@ -1,6 +1,7 @@
-import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+
+import 'bamboo_text.dart';
 
 ///
 /// 因为TextSpan可能会被复用，所以属性与context相关时，需要提供更新的方法，并在compare
