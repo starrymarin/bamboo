@@ -10,7 +10,7 @@ class BambooTextSpan extends TextSpan {
   const BambooTextSpan({
     required this.readOnly,
     required this.context,
-    super.text,
+    required String super.text,
     super.children,
     super.style,
     super.mouseCursor,
@@ -24,6 +24,9 @@ class BambooTextSpan extends TextSpan {
   final bool readOnly;
 
   final BambooTextBuildContext context;
+
+  @override
+  String get text => super.text as String;
 
   ///
   /// [other]是旧的span，如果super对比的结果是identical或者metadata，[RenderParagraph]

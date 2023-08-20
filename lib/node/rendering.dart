@@ -1,4 +1,5 @@
 import 'package:bamboo/node/node.dart';
+import 'package:bamboo/rendering/bamboo_paragraph.dart';
 import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -33,13 +34,13 @@ abstract class SpanRendering<T extends Node> extends NodeRendering<T> {
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext);
 
   void beforePaint(
-    RenderParagraph renderParagraph,
+    RenderBambooParagraph paragraph,
     PaintingContext context,
     Offset offset,
   ) {}
 
   void afterPaint(
-    RenderParagraph renderParagraph,
+    RenderBambooParagraph paragraph,
     PaintingContext context,
     Offset offset,
   ) {}

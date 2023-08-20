@@ -4,6 +4,7 @@ import 'package:bamboo/constants.dart';
 import 'package:bamboo/node/internal/type.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/rendering.dart';
+import 'package:bamboo/rendering/bamboo_paragraph.dart';
 import 'package:bamboo/rendering/bamboo_text.dart';
 import 'package:bamboo/utils/key.dart';
 import 'package:flutter/material.dart';
@@ -76,14 +77,14 @@ class _InlineCodeRendering extends SpanRendering<InlineCodeNode> {
 
   @override
   void beforePaint(
-    RenderParagraph renderParagraph,
+    RenderBambooParagraph paragraph,
     PaintingContext context,
     Offset offset,
   ) {
-    super.beforePaint(renderParagraph, context, offset);
+    super.beforePaint(paragraph, context, offset);
     int preLength = 0;
     _InlineCodeTextSpan? textSpan;
-    renderParagraph.text.visitChildren((span) {
+    paragraph.text.visitChildren((span) {
       if (span is _InlineCodeTextSpan && span.key == node.key) {
         textSpan = span;
         return false;
@@ -118,7 +119,7 @@ class _InlineCodeRendering extends SpanRendering<InlineCodeNode> {
       extentOffset: preLength + length,
     );
 
-    List<TextBox> boxes = renderParagraph.getBoxesForSelection(selection,
+    List<TextBox> boxes = paragraph.getBoxesForSelection(selection,
         boxHeightStyle: BoxHeightStyle.strut);
     for (TextBox box in boxes) {
       const inlineVerticalPadding = 2;

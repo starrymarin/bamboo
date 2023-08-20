@@ -1,10 +1,12 @@
 import 'dart:collection';
-import 'dart:ui' as ui show TextHeightBehavior;
+import 'dart:ui' as ui;
 
 import 'package:bamboo/bamboo.dart';
 import 'package:bamboo/caret.dart';
 import 'package:bamboo/node/node.dart';
 import 'package:bamboo/node/rendering.dart';
+import 'package:bamboo/rendering/bamboo_paragraph.dart';
+import 'package:bamboo/rendering/bamboo_text_span.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
@@ -109,21 +111,19 @@ class BambooTextState extends State<BambooText> {
   ///
   /// 首先找到本[BambooText]上层设置的textStyle，如果本[BambooText.style.inherit]为
   /// true，则与上层的style合并生成新的style，如果为false，则使用本身的style，然后将新
-  /// style保存到[_BambooTextStyle]中，以便下层使用。新style只需要传输给
-  /// [_BambooTextStyle]，不需要传输给[_TextProxy]和[Text]，因为他们的textPainter会
-  /// 默认合并上层的样式，而新style的作用则是生成strutStyle，并将其设置给[_TextProxy]和
-  /// [Text]
+  /// style保存到[_BambooTextStyle]中，以便下层使用。新style的另一个作用则是生成strutStyle，
+  /// 并将其设置给[_BambooRichText]
   ///
-  /// 如果[BambooText.strutStyle]不为null，[_TextProxy]和[Text]使用
-  /// [BambooText.strutStyle]，如果为null，则使用新生成的strutStyle，保证Text的
-  /// strutStyle不为空
+  /// 如果[BambooText.strutStyle]不为null，[_BambooRichText]使用[BambooText.strutStyle]，
+  /// 如果为null，则使用新生成的strutStyle，保证Text的strutStyle不为空
   ///
   /// [Text.strutStyle]不能为空，否则某些样式会出现问题，比如InlineCode
   ///
   @override
   Widget build(BuildContext context) {
-    TextStyle ancestorTextStyle = _BambooTextStyle.maybe(context)?.textStyle ??
-        DefaultTextStyle.of(context).style;
+    DefaultTextStyle defaultTextStyle = DefaultTextStyle.of(context);
+    TextStyle ancestorTextStyle =
+        _BambooTextStyle.maybe(context)?.textStyle ?? defaultTextStyle.style;
     TextStyle textStyle;
     if (widget.style == null) {
       textStyle = ancestorTextStyle;
@@ -134,49 +134,70 @@ class BambooTextState extends State<BambooText> {
         textStyle = widget.style!;
       }
     }
-    StrutStyle? mergedStrutStyle = StrutStyle.fromTextStyle(textStyle);
+    if (MediaQuery.boldTextOf(context)) {
+      textStyle = textStyle.merge(const TextStyle(fontWeight: FontWeight.bold));
+    }
 
     CaretVisibleRegistrar caretRegistrar = CaretContainer.maybeOf(context)!;
 
     CaretContainerDelegate caretContainerDelegate = CaretContainerDelegate();
+
+    final SelectionRegistrar? registrar = SelectionContainer.maybeOf(context);
+
+    Widget result = _BambooRichText(
+      text: TextSpan(
+        style: textStyle,
+        children: [_buildTextSpan(BambooTextBuildContext._wrap(context))]
+      ),
+      textAlign:
+          widget.textAlign ?? defaultTextStyle.textAlign ?? TextAlign.start,
+      textDirection: widget.textDirection,
+      // RichText uses Directionality.of to obtain a default if this is null.
+      locale: widget.locale,
+      // RichText uses Localizations.localeOf to obtain a default if this is null
+      softWrap: widget.softWrap ?? defaultTextStyle.softWrap,
+      overflow:
+          widget.overflow ?? textStyle.overflow ?? defaultTextStyle.overflow,
+      textScaleFactor:
+          widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
+      maxLines: widget.maxLines ?? defaultTextStyle.maxLines,
+      strutStyle: widget.strutStyle ?? StrutStyle.fromTextStyle(textStyle),
+      textWidthBasis: widget.textWidthBasis ?? defaultTextStyle.textWidthBasis,
+      textHeightBehavior: widget.textHeightBehavior ??
+          defaultTextStyle.textHeightBehavior ??
+          DefaultTextHeightBehavior.maybeOf(context),
+      selectionRegistrar: registrar,
+      selectionColor: widget.selectionColor ??
+          DefaultSelectionStyle.of(context).selectionColor ??
+          DefaultSelectionStyle.defaultColor,
+      spanRenders: widget.childNodes
+          .map((node) => node.render)
+          .whereType<SpanRendering>()
+          .toList(),
+    );
+    if (registrar != null) {
+      result = MouseRegion(
+        cursor: DefaultSelectionStyle.of(context).mouseCursor ??
+            SystemMouseCursors.text,
+        child: result,
+      );
+    }
+    if (widget.semanticsLabel != null) {
+      result = Semantics(
+        textDirection: widget.textDirection,
+        label: widget.semanticsLabel,
+        child: ExcludeSemantics(
+          child: result,
+        ),
+      );
+    }
 
     return CaretContainer(
       registrar: caretRegistrar,
       delegate: caretContainerDelegate,
       child: _BambooTextStyle(
         textStyle: textStyle,
-        child: _TextProxy(
-          caretRegistrar: caretContainerDelegate,
-          textStyle: widget.style,
-          textAlign: widget.textAlign ?? TextAlign.start,
-          textDirection: widget.textDirection,
-          textScaleFactor: widget.textScaleFactor ?? 1.0,
-          locale: widget.locale,
-          strutStyle: widget.strutStyle ?? mergedStrutStyle,
-          textWidthBasis: widget.textWidthBasis ?? TextWidthBasis.parent,
-          textHeightBehavior: widget.textHeightBehavior,
-          spanRenders: widget.childNodes
-              .map((node) => node.render)
-              .whereType<SpanRendering>()
-              .toList(),
-          bambooTheme: BambooTheme.of(context),
-          child: Text.rich(
-            _buildTextSpan(BambooTextBuildContext._wrap(context)),
-            style: widget.style,
-            strutStyle: widget.strutStyle ?? mergedStrutStyle,
-            textAlign: widget.textAlign,
-            textDirection: widget.textDirection,
-            locale: widget.locale,
-            softWrap: widget.softWrap,
-            overflow: widget.overflow,
-            textScaleFactor: widget.textScaleFactor,
-            maxLines: widget.maxLines,
-            semanticsLabel: widget.semanticsLabel,
-            textWidthBasis: widget.textWidthBasis,
-            textHeightBehavior: widget.textHeightBehavior,
-            selectionColor: widget.selectionColor,
-          ),
-        ),
+        child: result,
       ),
     );
   }
@@ -189,6 +210,49 @@ class BambooTextState extends State<BambooText> {
     }
   }
 }
+//
+// class _SelectableFragmentsGenerator extends SelectableFragmentsGenerator {
+//   _SelectableFragmentsGenerator({
+//     required this.text,
+//   });
+//
+//   final InlineSpan text;
+//
+//   @override
+//   List<SelectableFragment> generateSelectableFragments(
+//       RenderParagraph paragraph) {
+//     List<SelectableFragment> fragments = [];
+//     int spanStart = 0;
+//     text.visitChildren(
+//       (span) {
+//         int spanLength = 0;
+//         if (span is TextSpan) {
+//           spanLength = span.text?.length ?? 0;
+//         } else if (span is PlaceholderSpan) {
+//           spanLength = span.toPlainText(includeSemanticsLabels: false).length;
+//         } else {
+//           throw Exception("不支持除TextSpan和PlaceholderSpan之外的类型");
+//         }
+//         if (span is BambooTextSpan) {
+//           TextRange range = TextRange(
+//             start: spanStart,
+//             end: spanStart + spanLength,
+//           );
+//           if (!range.isCollapsed) {
+//             fragments.add(SelectableFragment(
+//               paragraph: paragraph,
+//               fullText: span.text,
+//               range: range,
+//             ));
+//           }
+//         }
+//         spanStart += spanLength;
+//         return true;
+//       },
+//     );
+//     return fragments;
+//   }
+// }
 
 ///
 /// 保存与上层合并之后的textStyle，查看[BambooText.build]
@@ -214,31 +278,54 @@ class _BambooTextStyle extends InheritedWidget {
   }
 }
 
-class _TextProxy extends SingleChildRenderObjectWidget {
-  const _TextProxy({
-    required this.caretRegistrar,
-    required Text super.child,
-    this.textStyle,
+mixin _ChildRenderParagraphMixin on RenderProxyBox {
+  late final RenderBambooParagraph _renderParagraph = () {
+    return _findRenderParagraph(child);
+  }();
+
+  RenderBambooParagraph _findRenderParagraph(RenderObject? renderObject) {
+    if (renderObject is RenderBambooParagraph) {
+      return renderObject;
+    } else if (renderObject is RenderObjectWithChildMixin) {
+      return _findRenderParagraph(renderObject.child);
+    } else {
+      throw Exception();
+    }
+  }
+}
+
+class _BambooRichText extends MultiChildRenderObjectWidget {
+  _BambooRichText({
+    super.key,
+    required this.text,
     this.textAlign = TextAlign.start,
     this.textDirection,
+    this.softWrap = true,
+    this.overflow = TextOverflow.clip,
     this.textScaleFactor = 1.0,
+    this.maxLines,
     this.locale,
     this.strutStyle,
     this.textWidthBasis = TextWidthBasis.parent,
     this.textHeightBehavior,
+    this.selectionRegistrar,
+    this.selectionColor,
     required this.spanRenders,
-    required this.bambooTheme,
-  });
+  }) : super(children: WidgetSpan.extractFromInlineSpan(text, textScaleFactor));
 
-  final CaretVisibleRegistrar caretRegistrar;
-
-  final TextStyle? textStyle;
+  final InlineSpan text;
 
   final TextAlign textAlign;
 
   final TextDirection? textDirection;
 
+  final bool softWrap;
+
+  final TextOverflow overflow;
+
   final double textScaleFactor;
+
+  final int? maxLines;
 
   final Locale? locale;
 
@@ -246,95 +333,73 @@ class _TextProxy extends SingleChildRenderObjectWidget {
 
   final TextWidthBasis textWidthBasis;
 
-  final TextHeightBehavior? textHeightBehavior;
+  final ui.TextHeightBehavior? textHeightBehavior;
+
+  final SelectionRegistrar? selectionRegistrar;
+
+  final Color? selectionColor;
 
   final List<SpanRendering> spanRenders;
 
-  final BambooTheme bambooTheme;
-
-  @override
-  Text get child => super.child! as Text;
-
-  /// 从[Text.build]拷贝，需要保持和Text行为一致
-  TextStyle? normalizeTextStyle(BuildContext context) {
-    final DefaultTextStyle defaultTextStyle = DefaultTextStyle.of(context);
-    TextStyle? effectiveTextStyle = textStyle;
-    if (textStyle == null || textStyle!.inherit) {
-      effectiveTextStyle = defaultTextStyle.style.merge(textStyle);
-    }
-    if (MediaQuery.boldTextOverride(context)) {
-      effectiveTextStyle = effectiveTextStyle!
-          .merge(const TextStyle(fontWeight: FontWeight.bold));
-    }
-    return effectiveTextStyle;
-  }
-
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return RenderParagraphProxy(
-      textStyle: normalizeTextStyle(context),
+    return _RenderBambooParagraph(
+      text,
       textAlign: textAlign,
       textDirection: textDirection ?? Directionality.of(context),
+      softWrap: softWrap,
+      overflow: overflow,
       textScaleFactor: textScaleFactor,
+      maxLines: maxLines,
       strutStyle: strutStyle,
-      locale: locale ?? Localizations.maybeLocaleOf(context),
       textWidthBasis: textWidthBasis,
       textHeightBehavior: textHeightBehavior,
+      locale: locale ?? Localizations.maybeLocaleOf(context),
+      registrar: selectionRegistrar,
+      selectionColor: selectionColor,
       spanRenders: spanRenders,
-      caretRegistrar: caretRegistrar,
-      bambooTheme: bambooTheme,
     );
   }
 
   @override
   void updateRenderObject(
-      BuildContext context, covariant RenderParagraphProxy renderObject) {
+      BuildContext context, _RenderBambooParagraph renderObject) {
     renderObject
-      ..textStyle = normalizeTextStyle(context)
+      ..text = text
       ..textAlign = textAlign
       ..textDirection = textDirection ?? Directionality.of(context)
+      ..softWrap = softWrap
+      ..overflow = overflow
       ..textScaleFactor = textScaleFactor
-      ..locale = locale ?? Localizations.maybeLocaleOf(context)
+      ..maxLines = maxLines
       ..strutStyle = strutStyle
       ..textWidthBasis = textWidthBasis
       ..textHeightBehavior = textHeightBehavior
-      ..spanRenders = spanRenders
-      ..caretRegistrar = caretRegistrar
-      ..bambooTheme = bambooTheme;
+      ..locale = locale ?? Localizations.maybeLocaleOf(context)
+      ..registrar = selectionRegistrar
+      ..selectionColor = selectionColor
+      ..spanRenders = spanRenders;
   }
 }
 
-class RenderParagraphProxy extends RenderProxyBox
-    with
-        _ChildRenderParagraphMixin,
-        _PrototypeTextPainterMixin,
-        _RenderParagraphProxyCursorMixin {
-  RenderParagraphProxy({
-    TextStyle? textStyle,
-    TextAlign textAlign = TextAlign.start,
-    TextDirection? textDirection,
-    double textScaleFactor = 1.0,
-    StrutStyle? strutStyle,
-    Locale? locale,
-    TextWidthBasis textWidthBasis = TextWidthBasis.parent,
-    TextHeightBehavior? textHeightBehavior,
+class _RenderBambooParagraph extends RenderBambooParagraph {
+  _RenderBambooParagraph(
+    super.text, {
+    super.textAlign = TextAlign.start,
+    required super.textDirection,
+    super.softWrap = true,
+    super.overflow = TextOverflow.clip,
+    super.textScaleFactor = 1.0,
+    super.maxLines,
+    super.locale,
+    super.strutStyle,
+    super.textWidthBasis = TextWidthBasis.parent,
+    super.textHeightBehavior,
+    super.children,
+    super.selectionColor,
+    super.registrar,
     required List<SpanRendering> spanRenders,
-    required BambooTheme bambooTheme,
-    required CaretVisibleRegistrar caretRegistrar,
-  }) : _spanRenders = spanRenders {
-    _painter = TextPainter(
-      text: TextSpan(text: ' ', style: textStyle),
-      textAlign: textAlign,
-      textDirection: textDirection,
-      textScaleFactor: textScaleFactor,
-      strutStyle: strutStyle,
-      locale: locale,
-      textWidthBasis: textWidthBasis,
-      textHeightBehavior: textHeightBehavior,
-    );
-    this.caretRegistrar = caretRegistrar;
-    this.bambooTheme = bambooTheme;
-  }
+  }) : _spanRenders = spanRenders;
 
   List<SpanRendering> _spanRenders;
 
@@ -349,106 +414,61 @@ class RenderParagraphProxy extends RenderProxyBox
   }
 
   @override
+  List<_SelectableFragment> getSelectableFragments() {
+    return [];
+  }
+
+  @override
   void paint(PaintingContext context, Offset offset) {
     for (SpanRendering spanRender in _spanRenders) {
-      spanRender.beforePaint(_renderParagraph, context, offset);
+      spanRender.beforePaint(this, context, offset);
     }
     super.paint(context, offset);
     for (SpanRendering spanRender in _spanRenders) {
-      spanRender.afterPaint(_renderParagraph, context, offset);
+      spanRender.afterPaint(this, context, offset);
     }
   }
 }
 
-mixin _ChildRenderParagraphMixin on RenderProxyBox {
-  late final RenderParagraph _renderParagraph = () {
-    return _findRenderParagraph(child);
-  }();
-
-  RenderParagraph _findRenderParagraph(RenderObject? renderObject) {
-    if (renderObject is RenderParagraph) {
-      return renderObject;
-    } else if (renderObject is RenderObjectWithChildMixin) {
-      return _findRenderParagraph(renderObject.child);
-    } else {
-      throw Exception();
-    }
+class _SelectableFragment extends SelectableFragment {
+  @override
+  void didChangeParagraphLayout() {
+    // TODO: implement didChangeParagraphLayout
   }
-}
-
-mixin _PrototypeTextPainterMixin on RenderBox {
-  late TextPainter _painter;
-
-  set textStyle(TextStyle? value) {
-    if (_painter.text!.style == value) {
-      return;
-    }
-    _painter.text = TextSpan(text: ' ', style: value);
-    markNeedsLayout();
-  }
-
-  set textAlign(TextAlign value) {
-    if (_painter.textAlign == value) {
-      return;
-    }
-    _painter.textAlign = value;
-    markNeedsLayout();
-  }
-
-  set textDirection(TextDirection? value) {
-    if (_painter.textDirection == value) {
-      return;
-    }
-    _painter.textDirection = value;
-    markNeedsLayout();
-  }
-
-  set textScaleFactor(double value) {
-    if (_painter.textScaleFactor == value) {
-      return;
-    }
-    _painter.textScaleFactor = value;
-    markNeedsLayout();
-  }
-
-  set strutStyle(StrutStyle? value) {
-    if (_painter.strutStyle == value) {
-      return;
-    }
-    _painter.strutStyle = value;
-    markNeedsLayout();
-  }
-
-  set locale(Locale? value) {
-    if (_painter.locale == value) {
-      return;
-    }
-    _painter.locale = value;
-    markNeedsLayout();
-  }
-
-  set textWidthBasis(TextWidthBasis value) {
-    if (_painter.textWidthBasis == value) {
-      return;
-    }
-    _painter.textWidthBasis = value;
-    markNeedsLayout();
-  }
-
-  set textHeightBehavior(TextHeightBehavior? value) {
-    if (_painter.textHeightBehavior == value) {
-      return;
-    }
-    _painter.textHeightBehavior = value;
-    markNeedsLayout();
-  }
-
-  double get preferredLineHeight => _painter.preferredLineHeight;
 
   @override
-  void performLayout() {
-    super.performLayout();
-    _painter.layout(
-        minWidth: constraints.minWidth, maxWidth: constraints.maxWidth);
+  SelectionResult dispatchSelectionEvent(SelectionEvent event) {
+    // TODO: implement dispatchSelectionEvent
+    throw UnimplementedError();
   }
+
+  @override
+  SelectedContent? getSelectedContent() {
+    // TODO: implement getSelectedContent
+    throw UnimplementedError();
+  }
+
+  @override
+  Matrix4 getTransformTo(RenderObject? ancestor) {
+    // TODO: implement getTransformTo
+    throw UnimplementedError();
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    // TODO: implement paint
+  }
+
+  @override
+  void pushHandleLayers(LayerLink? startHandle, LayerLink? endHandle) {
+    // TODO: implement pushHandleLayers
+  }
+
+  @override
+  // TODO: implement size
+  ui.Size get size => throw UnimplementedError();
+
+  @override
+  // TODO: implement value
+  SelectionGeometry get value => throw UnimplementedError();
 }

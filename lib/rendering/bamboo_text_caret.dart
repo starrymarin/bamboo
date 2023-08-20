@@ -3,7 +3,7 @@ part of 'bamboo_text.dart';
 const double _kCaretHeightOffset = 2.0; // pixels
 
 mixin _RenderParagraphProxyCursorMixin
-    on _ChildRenderParagraphMixin, _PrototypeTextPainterMixin
+    on _ChildRenderParagraphMixin
     implements CaretVisible {
   Offset? _positionWhenFound;
   Rect? _caretPrototype;
@@ -31,7 +31,7 @@ mixin _RenderParagraphProxyCursorMixin
 
   Rect? _computeCaretPrototype() {
     double cursorWidth = _bambooTheme!.cursorWidth;
-    double cursorHeight = _bambooTheme!.cursorHeight ?? preferredLineHeight;
+    double cursorHeight = _bambooTheme!.cursorHeight ?? _renderParagraph.textPainter.preferredLineHeight;
     switch (defaultTargetPlatform) {
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
@@ -67,7 +67,7 @@ mixin _RenderParagraphProxyCursorMixin
     }
     Offset offset = _positionWhenFound!;
     Rect caretPrototype = _caretPrototype!;
-    RenderParagraph paragraph = _renderParagraph;
+    RenderBambooParagraph paragraph = _renderParagraph;
     TextPosition textPosition = paragraph.getPositionForOffset(offset);
     Offset caretOffset =
     paragraph.getOffsetForCaret(textPosition, caretPrototype);
