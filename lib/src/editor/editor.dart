@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import '../bamboo.dart';
-import '../caret.dart';
-import '../rendering/proxy.dart';
-import 'caret.dart';
+import 'package:bamboo/bamboo.dart';
+import 'package:bamboo/utils.dart';
+
+import '../caret/caret.dart';
+import '../caret/editor_caret.dart';
+import 'document.dart';
 
 class Editor extends StatefulWidget {
   const Editor({super.key, required Document child}) : document = child;
@@ -144,12 +146,15 @@ class EditorState extends State<Editor>
           focusNode: _focusNode,
           child: _EditorScope(
             editorKey: _editorKey,
-            child: GestureDetector(
-              onTapDown: _handleTapDown,
-              onTap: _handleTap,
-              child: _Editor(
-                key: _editorKey,
-                child: widget.document,
+            child: CaretScrollSupervisor(
+              supervisorKey: _editorKey,
+              child: GestureDetector(
+                onTapDown: _handleTapDown,
+                onTap: _handleTap,
+                child: _Editor(
+                  key: _editorKey,
+                  child: widget.document,
+                ),
               ),
             ),
           ),
@@ -184,7 +189,7 @@ class _Editor extends MultiChildRenderObjectWidget {
   _Editor({
     required GlobalKey super.key,
     required Document child,
-  }) : super(children: [_DocumentProxy(child: child)]);
+  }) : super(children: [DocumentProxy(child: child)]);
 
   @override
   RenderObject createRenderObject(BuildContext context) {
@@ -203,18 +208,6 @@ class _Editor extends MultiChildRenderObjectWidget {
   }
 }
 
-class _DocumentProxy extends SingleChildRenderObjectWidget {
-  const _DocumentProxy({required super.child});
-
-  @override
-  RenderObject createRenderObject(BuildContext context) {
-    return _RenderDocumentProxy();
-  }
-}
-
-/// 这个类的目的是用来判断[RenderEditor]中的哪一个child是用来渲染document的
-class _RenderDocumentProxy extends RenderProxyBox {}
-
 class EditorParentData extends ContainerBoxParentData<RenderBox> {}
 
 ///
@@ -228,8 +221,8 @@ class RenderEditor extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, EditorParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, EditorParentData>,
-        RenderObjectWithLateChildMixin<_RenderDocumentProxy>,
-        RenderProxyBoxMixin<_RenderDocumentProxy>,
+        RenderObjectWithLateChildMixin<RenderDocumentProxy>,
+        RenderProxyBoxMixin<RenderDocumentProxy>,
         RenderEditorCaretMixin {
   RenderEditor({
     required BambooTheme bambooTheme,
@@ -267,7 +260,7 @@ class RenderEditor extends RenderBox
   @override
   void insert(RenderBox child, {RenderBox? after}) {
     super.insert(child, after: after);
-    if (child is _RenderDocumentProxy) {
+    if (child is RenderDocumentProxy) {
       this.child = child;
     }
   }

@@ -1,15 +1,16 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-import '../bamboo.dart';
-import '../caret.dart';
-import '../rendering/proxy.dart';
-import 'editor.dart';
+import 'package:bamboo/bamboo.dart';
+import 'package:bamboo/utils.dart';
+
+import 'caret.dart';
+import '../editor/editor.dart';
 
 ///
 /// 是将[RenderEditorCaret]混入[RenderEditor]的辅助类
 ///
-mixin RenderEditorCaretMixin on RenderBox {
+mixin RenderEditorCaretMixin on RenderBox implements RenderCaretScrollSupervisor {
   final List<WeakReference<ScrollPosition>> _trackedScrollPositions = [];
 
   late RenderEditorCaret _renderEditorCaret;
@@ -22,6 +23,7 @@ mixin RenderEditorCaretMixin on RenderBox {
     adoptChild(_renderEditorCaret);
   }
 
+  @override
   void caretTrack(ScrollPosition position) {
     position.removeListener(_markCursorNeedsPaint);
     position.addListener(_markCursorNeedsPaint);

@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
 
-import '../rendering/bamboo_text.dart';
-import '../utils/collection.dart';
+import 'package:bamboo/text.dart';
+import 'package:bamboo/utils.dart';
+
 import 'internal/json.dart';
 import 'rendering.dart';
 

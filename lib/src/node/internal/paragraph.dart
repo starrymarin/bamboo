@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
-import '../../rendering/bamboo_text.dart';
+import 'package:bamboo/text.dart';
+
 import '../node.dart';
 import '../rendering.dart';
 import '../text.dart';

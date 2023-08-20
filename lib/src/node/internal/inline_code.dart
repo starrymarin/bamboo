@@ -3,10 +3,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../../constants.dart';
-import '../../rendering/bamboo_paragraph.dart';
-import '../../rendering/bamboo_text.dart';
-import '../../utils/key.dart';
+import 'package:bamboo/constants.dart';
+import 'package:bamboo/text.dart';
+import 'package:bamboo/utils.dart';
+
 import '../node.dart';
 import '../rendering.dart';
 import 'type.dart';

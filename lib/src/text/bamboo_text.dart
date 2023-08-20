@@ -6,9 +6,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-import '../caret.dart';
-import '../node/node.dart';
-import '../node/rendering.dart';
+import 'package:bamboo/caret.dart';
+import 'package:bamboo/node.dart';
+
 import 'bamboo_paragraph.dart';
 
 ///

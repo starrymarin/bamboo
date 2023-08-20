@@ -1,7 +1,4 @@
-
 import 'package:flutter/widgets.dart';
-
-import 'editor/editor.dart';
 
 abstract class CaretVisibleFinder {
   /// 查找落点所在的[CaretVisible]，如果此对象是一个[RenderObject]，那么[position]就是
@@ -96,10 +93,10 @@ class _CaretContainerState extends State<CaretContainer> with CaretVisible {
   Size get size => (context.findRenderObject() as RenderBox).size;
 
   void _trackScrollPosition() {
-    RenderEditor? editor = Editor.maybeOf(context)?.renderEditor;
+    RenderCaretScrollSupervisor? render = CaretScrollSupervisor.maybeOf(context);
     ScrollPosition? scrollPosition = Scrollable.maybeOf(context)?.position;
-    if (editor != null && scrollPosition != null) {
-      editor.caretTrack(scrollPosition);
+    if (render != null && scrollPosition != null) {
+      render.caretTrack(scrollPosition);
     }
   }
 
@@ -132,6 +129,32 @@ class _CaretContainerState extends State<CaretContainer> with CaretVisible {
     widget.registrar.remove(this);
     widget.delegate.containerContext = null;
   }
+}
+
+class CaretScrollSupervisor extends InheritedWidget {
+  const CaretScrollSupervisor({
+    super.key,
+    required GlobalKey supervisorKey,
+    required super.child,
+  }) : _supervisorKey = supervisorKey;
+
+  final GlobalKey _supervisorKey;
+
+  static RenderCaretScrollSupervisor? maybeOf(BuildContext context) {
+    CaretScrollSupervisor? supervisor = context
+        .dependOnInheritedWidgetOfExactType<CaretScrollSupervisor>();
+    return supervisor?._supervisorKey.currentContext
+        ?.findAncestorRenderObjectOfType<RenderCaretScrollSupervisor>();
+  }
+
+  @override
+  bool updateShouldNotify(covariant CaretScrollSupervisor oldWidget) {
+    return _supervisorKey != oldWidget._supervisorKey;
+  }
+}
+
+mixin RenderCaretScrollSupervisor on RenderObject {
+  void caretTrack(ScrollPosition position);
 }
 
 ///

@@ -1,13 +1,11 @@
-
-
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 
-import '../bamboo.dart';
-import '../caret.dart';
-import 'bamboo_paragraph.dart';
-import 'bamboo_text.dart';
+import 'package:bamboo/bamboo.dart';
+import 'package:bamboo/text.dart';
+
+import 'caret.dart';
 
 const double _kCaretHeightOffset = 2.0; // pixels
 

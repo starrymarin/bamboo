@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:bamboo/bamboo.dart';
-import 'package:bamboo/node/node.dart';
+import 'package:bamboo/node.dart';
 
 void main() {
   runApp(const MyApp());

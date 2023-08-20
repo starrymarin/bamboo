@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
-import '../rendering/bamboo_paragraph.dart';
-import '../rendering/bamboo_text.dart';
+import 'package:bamboo/text.dart';
+
 import 'node.dart';
 
 abstract class NodeRendering<T extends Node> {
