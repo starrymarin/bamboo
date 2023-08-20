@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'constants.dart';
-import 'editor/editor.dart';
+import '../constants.dart';
 import 'node/internal/block_quote.dart';
 import 'node/internal/inline_code.dart';
 import 'node/internal/json.dart';
@@ -10,6 +9,7 @@ import 'node/internal/table.dart';
 import 'node/internal/type.dart';
 import 'node/node.dart';
 import 'node/text.dart';
+import 'editor/editor.dart';
 import 'widgets/keep_alive.dart';
 import 'widgets/scroll.dart';
 

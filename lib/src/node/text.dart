@@ -7,7 +7,7 @@ import '../rendering/bamboo_text_span.dart';
 import 'internal/json.dart';
 import 'node.dart';
 import 'rendering.dart';
-import '../../../utils/color.dart';
+import '../utils/color.dart';
 
 class TextNode extends Node implements SpanNode {
   TextNode({required super.json});

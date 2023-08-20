@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../constants.dart';
+import '../../../constants.dart';
 import '../../rendering/bamboo_paragraph.dart';
 import '../../rendering/bamboo_text.dart';
 import '../../utils/key.dart';
