@@ -4,12 +4,14 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:bamboo/caret.dart';
 import 'package:bamboo/node.dart';
 
 import 'bamboo_paragraph.dart';
+import 'bamboo_text_span.dart';
 
 ///
 /// 对[BambooText.build]context的封装，构造方法声明为私有，这限制了[SpanNode.buildSpan]
@@ -218,36 +220,7 @@ class BambooTextState extends State<BambooText> {
 //   @override
 //   List<SelectableFragment> generateSelectableFragments(
 //       RenderParagraph paragraph) {
-//     List<SelectableFragment> fragments = [];
-//     int spanStart = 0;
-//     text.visitChildren(
-//       (span) {
-//         int spanLength = 0;
-//         if (span is TextSpan) {
-//           spanLength = span.text?.length ?? 0;
-//         } else if (span is PlaceholderSpan) {
-//           spanLength = span.toPlainText(includeSemanticsLabels: false).length;
-//         } else {
-//           throw Exception("不支持除TextSpan和PlaceholderSpan之外的类型");
-//         }
-//         if (span is BambooTextSpan) {
-//           TextRange range = TextRange(
-//             start: spanStart,
-//             end: spanStart + spanLength,
-//           );
-//           if (!range.isCollapsed) {
-//             fragments.add(SelectableFragment(
-//               paragraph: paragraph,
-//               fullText: span.text,
-//               range: range,
-//             ));
-//           }
-//         }
-//         spanStart += spanLength;
-//         return true;
-//       },
-//     );
-//     return fragments;
+
 //   }
 // }
 
@@ -412,7 +385,36 @@ class _RenderBambooParagraph extends RenderBambooParagraph {
 
   @override
   List<_SelectableFragment> getSelectableFragments() {
+    List<_SelectableFragment> fragments = [];
+    int spanStart = 0;
+    text.visitChildren(
+          (span) {
+        int spanLength = 0;
+        if (span is TextSpan) {
+          spanLength = span.text?.length ?? 0;
+        } else if (span is PlaceholderSpan) {
+          spanLength = span.toPlainText(includeSemanticsLabels: false).length;
+        } else {
+          throw Exception("不支持除TextSpan和PlaceholderSpan之外的类型");
+        }
+        if (span is BambooTextSpan) {
+          TextRange range = TextRange(
+            start: spanStart,
+            end: spanStart + spanLength,
+          );
+          if (!range.isCollapsed) {
+            fragments.add(_SelectableFragment(
+              paragraph: this,
+              range: range,
+            ));
+          }
+        }
+        spanStart += spanLength;
+        return true;
+      },
+    );
     return [];
+    // return fragments;
   }
 
   @override
@@ -428,6 +430,15 @@ class _RenderBambooParagraph extends RenderBambooParagraph {
 }
 
 class _SelectableFragment extends SelectableFragment {
+  _SelectableFragment({
+    required this.paragraph,
+    required this.range
+  });
+
+  final RenderBambooParagraph paragraph;
+
+  final TextRange range;
+
   @override
   void didChangeParagraphLayout() {
     // TODO: implement didChangeParagraphLayout
