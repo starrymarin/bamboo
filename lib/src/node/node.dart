@@ -25,6 +25,8 @@ abstract class Node with ChangeNotifier {
 
   final List<Node> children = [];
 
+  final List<int> path = [];
+
   late final NodeGraphics graphics = () {
     return createGraphics();
   }();
@@ -37,6 +39,40 @@ abstract class Node with ChangeNotifier {
 
   bool deepChildrenEquals(Node other) {
     return deepEquals(children, other.children);
+  }
+  
+  void insertChild(int index, Node child) {
+    children.insert(index, child);
+    _updateChildrenPath(index);
+    update();
+  }
+
+  bool removeChild(Node child) {
+    int index = children.indexOf(child);
+    if (index < 0) {
+      return false;
+    }
+    children.remove(child);
+    _updateChildrenPath(index);
+    update();
+    return true;
+  }
+
+  bool removeChildAt(int index) {
+    if (index >= children.length) {
+      return false;
+    }
+    children.removeAt(index);
+    _updateChildrenPath(index);
+    update();
+    return true;
+  }
+
+  void _updateChildrenPath([int startIndex = 0]) {
+    for (int index = startIndex; index < children.length; index++) {
+      List<int> childPath = children[index].path;
+      childPath[childPath.length - 1] = index;
+    }
   }
 }
 

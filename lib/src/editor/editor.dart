@@ -138,23 +138,21 @@ class EditorState extends State<Editor>
   @override
   Widget build(BuildContext context) {
     CaretContainerDelegate caretContainerDelegate = CaretContainerDelegate();
-    return SelectionArea(
-      child: CaretContainer(
-        registrar: this,
-        delegate: caretContainerDelegate,
-        child: Focus(
-          focusNode: _focusNode,
-          child: _EditorScope(
-            editorKey: _editorKey,
-            child: CaretScrollSupervisor(
-              supervisorKey: _editorKey,
-              child: GestureDetector(
-                onTapDown: _handleTapDown,
-                onTap: _handleTap,
-                child: _Editor(
-                  key: _editorKey,
-                  child: widget.document,
-                ),
+    return CaretContainer(
+      registrar: this,
+      delegate: caretContainerDelegate,
+      child: Focus(
+        focusNode: _focusNode,
+        child: _EditorScope(
+          editorKey: _editorKey,
+          child: CaretScrollSupervisor(
+            supervisorKey: _editorKey,
+            child: GestureDetector(
+              onTapDown: _handleTapDown,
+              onTap: _handleTap,
+              child: _Editor(
+                key: _editorKey,
+                child: widget.document,
               ),
             ),
           ),

@@ -46,6 +46,19 @@ class TextNode extends Node implements SpanNode {
   }
 
   @override
+  void insertChild(int index, Node child) {}
+
+  @override
+  bool removeChild(Node child) {
+    return false;
+  }
+
+  @override
+  bool removeChildAt(int index) {
+    return false;
+  }
+
+  @override
   bool equals(Object other) {
     if (other is! TextNode) {
       return false;
@@ -89,9 +102,9 @@ class _TextSpanRender extends SpanGraphics<TextNode> {
       style = style.copyWith(fontStyle: FontStyle.italic);
     }
     return BambooTextSpan(
+      textNode: node,
       readOnly: configuration.readOnly,
       context: bambooTextBuildContext,
-      text: node.text,
       style: style,
     );
   }

@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:bamboo/selection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
@@ -23,11 +24,10 @@ const String _kEllipsis = '\u2026';
 /// 制过来，还有更大的灵活性，唯一不足的是可能无法及时同步flutter官方的更新
 ///
 /// 修改部分如下：
-/// 1. [RenderBambooParagraph]修改为abstract类，使用时需要具体实现，并实现[getSelectableFragments]
-/// 方法
+/// 1. [RenderBambooParagraph]修改为abstract类，使用时需要实现[getSelectableFragments]
 /// 2. [_lastSelectableFragments]类型由[_selectableFragment]替换为[SelectableFragment]
 /// 3. 开放了[textPainter]
-/// 4. 修改[getBoxesForSelection]boxHeightStyle默认值为ui.BoxHeightStyle.strut
+/// 4. 修改[getBoxesForSelection]boxHeightStyle默认值为[ui.BoxHeightStyle.strut]
 abstract class RenderBambooParagraph extends RenderBox with ContainerRenderObjectMixin<RenderBox, TextParentData>, RenderInlineChildrenContainerDefaults, RelayoutWhenSystemFontsChangeMixin {
   /// Creates a paragraph render object.
   ///
@@ -1048,7 +1048,9 @@ abstract class RenderBambooParagraph extends RenderBox with ContainerRenderObjec
   }
 }
 
-abstract class SelectableFragment with Selectable, ChangeNotifier {
+abstract class SelectableFragment extends BambooSelectable {
+  SelectableFragment({required super.node});
+
   TextPosition? textSelectionStart;
   TextPosition? textSelectionEnd;
 

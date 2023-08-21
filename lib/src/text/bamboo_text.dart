@@ -404,6 +404,7 @@ class _RenderBambooParagraph extends RenderBambooParagraph {
           );
           if (!range.isCollapsed) {
             fragments.add(_SelectableFragment(
+              node: span.textNode,
               paragraph: this,
               range: range,
             ));
@@ -431,8 +432,9 @@ class _RenderBambooParagraph extends RenderBambooParagraph {
 
 class _SelectableFragment extends SelectableFragment {
   _SelectableFragment({
+    required super.node,
     required this.paragraph,
-    required this.range
+    required this.range,
   });
 
   final RenderBambooParagraph paragraph;

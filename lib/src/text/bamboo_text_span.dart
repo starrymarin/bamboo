@@ -1,3 +1,4 @@
+import 'package:bamboo/node.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -8,10 +9,10 @@ import 'bamboo_text.dart';
 /// 中更新
 ///
 class BambooTextSpan extends TextSpan {
-  const BambooTextSpan({
+  BambooTextSpan({
+    required this.textNode,
     required this.readOnly,
     required this.context,
-    required String super.text,
     super.children,
     super.style,
     super.mouseCursor,
@@ -20,7 +21,9 @@ class BambooTextSpan extends TextSpan {
     super.semanticsLabel,
     super.locale,
     super.spellOut,
-  });
+  }) : super(text: textNode.text);
+
+  final TextNode textNode;
 
   final bool readOnly;
 
