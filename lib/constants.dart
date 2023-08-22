@@ -3,3 +3,4 @@ const monospace = "monospace";
 const double editorWidth = 710;
 
 const useListView = true;
+const useCustomParagraph = false;

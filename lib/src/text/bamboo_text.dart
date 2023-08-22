@@ -1,17 +1,105 @@
 import 'dart:collection';
 import 'dart:ui' as ui;
 
+import 'package:bamboo/bamboo.dart';
+import 'package:bamboo/constants.dart';
+import 'package:bamboo/src/text/bamboo_rich_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:bamboo/caret.dart';
 import 'package:bamboo/node.dart';
 
 import 'bamboo_paragraph.dart';
-import 'bamboo_text_span.dart';
+
+class BambooTextParagraph {
+  BambooTextParagraph.flutter({
+    required RenderParagraph paragraph,
+    required TextPainter? prototypeTextPainter,
+  })
+      : _renderParagraph = paragraph,
+        _prototypeTextPainter = prototypeTextPainter,
+        _renderBambooParagraph = null {
+    if (prototypeTextPainter == null) {
+      throw Exception(
+        "使用flutter RenderParagraph时不能没有prototypeTextPainter",
+      );
+    }
+  }
+
+  const BambooTextParagraph.custom({ required RenderBambooParagraph paragraph,})
+      : _renderParagraph = null,
+        _prototypeTextPainter = null,
+        _renderBambooParagraph = paragraph;
+
+  final RenderParagraph? _renderParagraph;
+
+  final TextPainter? _prototypeTextPainter;
+
+  final RenderBambooParagraph? _renderBambooParagraph;
+
+  static final Exception _nullParagraphException = Exception(
+    "没有任何一种paragraph",
+  );
+
+  InlineSpan get text {
+    if (useCustomParagraph) {
+      return _renderBambooParagraph!.text;
+    } else {
+      return _renderParagraph!.text;
+    }
+  }
+
+  double get preferredLineHeight {
+    if (useCustomParagraph) {
+      return _renderBambooParagraph!.textPainter.preferredLineHeight;
+    } else {
+      return _prototypeTextPainter!.preferredLineHeight;
+    }
+  }
+
+  List<ui.TextBox> getBoxesForSelection(TextSelection selection, {
+    ui.BoxHeightStyle boxHeightStyle = ui.BoxHeightStyle.strut,
+    ui.BoxWidthStyle boxWidthStyle = ui.BoxWidthStyle.tight,
+  }) {
+    if (useCustomParagraph) {
+      return _renderBambooParagraph!.getBoxesForSelection(
+          selection, boxHeightStyle: boxHeightStyle,
+          boxWidthStyle: boxWidthStyle);
+    } else {
+      return _renderParagraph!.getBoxesForSelection(
+          selection, boxHeightStyle: boxHeightStyle,
+          boxWidthStyle: boxWidthStyle);
+    }
+  }
+
+  TextPosition getPositionForOffset(Offset offset) {
+    if (useCustomParagraph) {
+      return _renderBambooParagraph!.getPositionForOffset(offset);
+    } else {
+      return _renderParagraph!.getPositionForOffset(offset);
+    }
+  }
+
+  Offset getOffsetForCaret(TextPosition position, Rect caretPrototype) {
+    if (useCustomParagraph) {
+      return _renderBambooParagraph!.getOffsetForCaret(
+        position, caretPrototype);
+    } else {
+      return _renderParagraph!.getOffsetForCaret(position, caretPrototype);
+    }
+  }
+
+  double? getFullHeightForCaret(TextPosition position) {
+    if (useCustomParagraph) {
+      return _renderBambooParagraph!.getFullHeightForCaret(position);
+    } else {
+      return _renderParagraph!.getFullHeightForCaret(position);
+    }
+  }
+}
 
 ///
 /// 对[BambooText.build]context的封装，构造方法声明为私有，这限制了[SpanNode.buildSpan]
@@ -53,7 +141,7 @@ class BambooText extends StatefulWidget {
   final List<Node> childNodes;
 
   final InlineSpan Function(BambooTextBuildContext bambooTextBuildContext)?
-      textSpanBuilder;
+  textSpanBuilder;
 
   final TextStyle? style;
 
@@ -87,7 +175,7 @@ class BambooText extends StatefulWidget {
 
 class BambooTextState extends State<BambooText> {
   final HashSet<GestureRecognizer> bambooTextSpanGestureRecognizers =
-      HashSet.identity();
+  HashSet.identity();
 
   InlineSpan _buildTextSpan(BambooTextBuildContext bambooTextBuildContext) {
     if (widget.textSpanBuilder != null) {
@@ -110,19 +198,25 @@ class BambooTextState extends State<BambooText> {
   ///
   /// 首先找到本[BambooText]上层设置的textStyle，如果本[BambooText.style.inherit]为
   /// true，则与上层的style合并生成新的style，如果为false，则使用本身的style，然后将新
-  /// style保存到[_BambooTextStyle]中，以便下层使用。新style的另一个作用则是生成strutStyle，
-  /// 并将其设置给[_BambooRichText]
+  /// style保存到[_BambooTextStyle]中，以便下层使用。新style只需要传输给
+  /// [_BambooTextStyle]，不需要传输给[_TextProxy]和[Text]，因为他们的textPainter会
+  /// 默认合并上层的样式，而新style的作用则是生成strutStyle，并将其设置给[_TextProxy]和
+  /// [Text]
   ///
-  /// 如果[BambooText.strutStyle]不为null，[_BambooRichText]使用[BambooText.strutStyle]，
-  /// 如果为null，则使用新生成的strutStyle，保证Text的strutStyle不为空
+  /// 如果[BambooText.strutStyle]不为null，[_TextProxy]和[Text]使用
+  /// [BambooText.strutStyle]，如果为null，则使用新生成的strutStyle，保证Text的
+  /// strutStyle不为空
   ///
   /// [Text.strutStyle]不能为空，否则某些样式会出现问题，比如InlineCode
   ///
   @override
   Widget build(BuildContext context) {
-    DefaultTextStyle defaultTextStyle = DefaultTextStyle.of(context);
-    TextStyle ancestorTextStyle =
-        _BambooTextStyle.maybe(context)?.textStyle ?? defaultTextStyle.style;
+    TextStyle ancestorTextStyle = _BambooTextStyle
+        .maybe(context)
+        ?.textStyle ??
+        DefaultTextStyle
+            .of(context)
+            .style;
     TextStyle textStyle;
     if (widget.style == null) {
       textStyle = ancestorTextStyle;
@@ -133,59 +227,62 @@ class BambooTextState extends State<BambooText> {
         textStyle = widget.style!;
       }
     }
-    if (MediaQuery.boldTextOf(context)) {
-      textStyle = textStyle.merge(const TextStyle(fontWeight: FontWeight.bold));
-    }
+    StrutStyle? mergedStrutStyle = StrutStyle.fromTextStyle(textStyle);
 
     CaretVisibleRegistrar caretRegistrar = CaretContainer.maybeOf(context)!;
 
     CaretContainerDelegate caretContainerDelegate = CaretContainerDelegate();
 
-    final SelectionRegistrar? registrar = SelectionContainer.maybeOf(context);
-
-    Widget result = _BambooRichText(
-      text: TextSpan(
-          style: textStyle,
-          children: [_buildTextSpan(BambooTextBuildContext._wrap(context))]),
-      textAlign:
-          widget.textAlign ?? defaultTextStyle.textAlign ?? TextAlign.start,
-      textDirection: widget.textDirection,
-      // RichText uses Directionality.of to obtain a default if this is null.
-      locale: widget.locale,
-      // RichText uses Localizations.localeOf to obtain a default if this is null
-      softWrap: widget.softWrap ?? defaultTextStyle.softWrap,
-      overflow:
-          widget.overflow ?? textStyle.overflow ?? defaultTextStyle.overflow,
-      textScaleFactor:
-          widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
-      maxLines: widget.maxLines ?? defaultTextStyle.maxLines,
-      strutStyle: widget.strutStyle ?? StrutStyle.fromTextStyle(textStyle),
-      textWidthBasis: widget.textWidthBasis ?? defaultTextStyle.textWidthBasis,
-      textHeightBehavior: widget.textHeightBehavior ??
-          defaultTextStyle.textHeightBehavior ??
-          DefaultTextHeightBehavior.maybeOf(context),
-      selectionRegistrar: registrar,
-      selectionColor: widget.selectionColor ??
-          DefaultSelectionStyle.of(context).selectionColor ??
-          DefaultSelectionStyle.defaultColor,
-      spanGraphicsList: widget.childNodes
-          .map((node) => node.graphics)
-          .whereType<SpanGraphics>()
-          .toList(),
-    );
-    if (registrar != null) {
-      result = MouseRegion(
-        cursor: DefaultSelectionStyle.of(context).mouseCursor ??
-            SystemMouseCursors.text,
-        child: result,
-      );
-    }
-    if (widget.semanticsLabel != null) {
-      result = Semantics(
+    Widget textWidget;
+    if (useCustomParagraph) {
+      textWidget = BambooRichText(
+        textSpan: _buildTextSpan(BambooTextBuildContext._wrap(context)),
+        childNodes: widget.childNodes,
+        style: widget.style,
+        strutStyle: widget.strutStyle ?? mergedStrutStyle,
+        textAlign: widget.textAlign,
         textDirection: widget.textDirection,
-        label: widget.semanticsLabel,
-        child: ExcludeSemantics(
-          child: result,
+        locale: widget.locale,
+        softWrap: widget.softWrap,
+        overflow: widget.overflow,
+        textScaleFactor: widget.textScaleFactor,
+        maxLines: widget.maxLines,
+        semanticsLabel: widget.semanticsLabel,
+        textWidthBasis: widget.textWidthBasis,
+        textHeightBehavior: widget.textHeightBehavior,
+        selectionColor: widget.selectionColor,
+      );
+    } else {
+      textWidget = _TextProxy(
+        caretRegistrar: caretContainerDelegate,
+        textStyle: widget.style,
+        textAlign: widget.textAlign ?? TextAlign.start,
+        textDirection: widget.textDirection,
+        textScaleFactor: widget.textScaleFactor ?? 1.0,
+        locale: widget.locale,
+        strutStyle: widget.strutStyle ?? mergedStrutStyle,
+        textWidthBasis: widget.textWidthBasis ?? TextWidthBasis.parent,
+        textHeightBehavior: widget.textHeightBehavior,
+        spanGraphicsList: widget.childNodes
+            .map((node) => node.graphics)
+            .whereType<SpanGraphics>()
+            .toList(),
+        bambooTheme: BambooTheme.of(context),
+        child: Text.rich(
+          _buildTextSpan(BambooTextBuildContext._wrap(context)),
+          style: widget.style,
+          strutStyle: widget.strutStyle ?? mergedStrutStyle,
+          textAlign: widget.textAlign,
+          textDirection: widget.textDirection,
+          locale: widget.locale,
+          softWrap: widget.softWrap,
+          overflow: widget.overflow,
+          textScaleFactor: widget.textScaleFactor,
+          maxLines: widget.maxLines,
+          semanticsLabel: widget.semanticsLabel,
+          textWidthBasis: widget.textWidthBasis,
+          textHeightBehavior: widget.textHeightBehavior,
+          selectionColor: widget.selectionColor,
         ),
       );
     }
@@ -195,7 +292,7 @@ class BambooTextState extends State<BambooText> {
       delegate: caretContainerDelegate,
       child: _BambooTextStyle(
         textStyle: textStyle,
-        child: result,
+        child: textWidget,
       ),
     );
   }
@@ -208,20 +305,6 @@ class BambooTextState extends State<BambooText> {
     }
   }
 }
-//
-// class _SelectableFragmentsGenerator extends SelectableFragmentsGenerator {
-//   _SelectableFragmentsGenerator({
-//     required this.text,
-//   });
-//
-//   final InlineSpan text;
-//
-//   @override
-//   List<SelectableFragment> generateSelectableFragments(
-//       RenderParagraph paragraph) {
-
-//   }
-// }
 
 ///
 /// 保存与上层合并之后的textStyle，查看[BambooText.build]
@@ -247,54 +330,31 @@ class _BambooTextStyle extends InheritedWidget {
   }
 }
 
-mixin ChildRenderParagraphMixin on RenderProxyBox {
-  late final RenderBambooParagraph renderParagraph = () {
-    return _findRenderParagraph(child);
-  }();
-
-  RenderBambooParagraph _findRenderParagraph(RenderObject? renderObject) {
-    if (renderObject is RenderBambooParagraph) {
-      return renderObject;
-    } else if (renderObject is RenderObjectWithChildMixin) {
-      return _findRenderParagraph(renderObject.child);
-    } else {
-      throw Exception();
-    }
-  }
-}
-
-class _BambooRichText extends MultiChildRenderObjectWidget {
-  _BambooRichText({
-    super.key,
-    required this.text,
+class _TextProxy extends SingleChildRenderObjectWidget {
+  const _TextProxy({
+    required this.caretRegistrar,
+    required Text super.child,
+    this.textStyle,
     this.textAlign = TextAlign.start,
     this.textDirection,
-    this.softWrap = true,
-    this.overflow = TextOverflow.clip,
     this.textScaleFactor = 1.0,
-    this.maxLines,
     this.locale,
     this.strutStyle,
     this.textWidthBasis = TextWidthBasis.parent,
     this.textHeightBehavior,
-    this.selectionRegistrar,
-    this.selectionColor,
     required this.spanGraphicsList,
-  }) : super(children: WidgetSpan.extractFromInlineSpan(text, textScaleFactor));
+    required this.bambooTheme,
+  });
 
-  final InlineSpan text;
+  final CaretVisibleRegistrar caretRegistrar;
+
+  final TextStyle? textStyle;
 
   final TextAlign textAlign;
 
   final TextDirection? textDirection;
 
-  final bool softWrap;
-
-  final TextOverflow overflow;
-
   final double textScaleFactor;
-
-  final int? maxLines;
 
   final Locale? locale;
 
@@ -302,79 +362,101 @@ class _BambooRichText extends MultiChildRenderObjectWidget {
 
   final TextWidthBasis textWidthBasis;
 
-  final ui.TextHeightBehavior? textHeightBehavior;
-
-  final SelectionRegistrar? selectionRegistrar;
-
-  final Color? selectionColor;
+  final TextHeightBehavior? textHeightBehavior;
 
   final List<SpanGraphics> spanGraphicsList;
 
+  final BambooTheme bambooTheme;
+
+  @override
+  Text get child => super.child! as Text;
+
+  /// 从[Text.build]拷贝，需要保持和Text行为一致
+  TextStyle? normalizeTextStyle(BuildContext context) {
+    final DefaultTextStyle defaultTextStyle = DefaultTextStyle.of(context);
+    TextStyle? effectiveTextStyle = textStyle;
+    if (textStyle == null || textStyle!.inherit) {
+      effectiveTextStyle = defaultTextStyle.style.merge(textStyle);
+    }
+    if (MediaQuery.boldTextOf(context)) {
+      effectiveTextStyle = effectiveTextStyle!
+          .merge(const TextStyle(fontWeight: FontWeight.bold));
+    }
+    return effectiveTextStyle;
+  }
+
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return _RenderBambooParagraph(
-      text,
+    return _RenderParagraphProxy(
+      textStyle: normalizeTextStyle(context),
       textAlign: textAlign,
       textDirection: textDirection ?? Directionality.of(context),
-      softWrap: softWrap,
-      overflow: overflow,
       textScaleFactor: textScaleFactor,
-      maxLines: maxLines,
       strutStyle: strutStyle,
+      locale: locale ?? Localizations.maybeLocaleOf(context),
       textWidthBasis: textWidthBasis,
       textHeightBehavior: textHeightBehavior,
-      locale: locale ?? Localizations.maybeLocaleOf(context),
-      registrar: selectionRegistrar,
-      selectionColor: selectionColor,
       spanGraphicsList: spanGraphicsList,
+      caretRegistrar: caretRegistrar,
+      bambooTheme: bambooTheme,
     );
   }
 
   @override
-  void updateRenderObject(
-      BuildContext context, _RenderBambooParagraph renderObject) {
+  void updateRenderObject(BuildContext context,
+      covariant _RenderParagraphProxy renderObject) {
     renderObject
-      ..text = text
+      ..textStyle = normalizeTextStyle(context)
       ..textAlign = textAlign
       ..textDirection = textDirection ?? Directionality.of(context)
-      ..softWrap = softWrap
-      ..overflow = overflow
       ..textScaleFactor = textScaleFactor
-      ..maxLines = maxLines
+      ..locale = locale ?? Localizations.maybeLocaleOf(context)
       ..strutStyle = strutStyle
       ..textWidthBasis = textWidthBasis
       ..textHeightBehavior = textHeightBehavior
-      ..locale = locale ?? Localizations.maybeLocaleOf(context)
-      ..registrar = selectionRegistrar
-      ..selectionColor = selectionColor
-      ..spanGraphicsList = spanGraphicsList;
+      ..spanRenders = spanGraphicsList;
+    // ..caretRegistrar = caretRegistrar
+    // ..bambooTheme = bambooTheme;
   }
 }
 
-class _RenderBambooParagraph extends RenderBambooParagraph {
-  _RenderBambooParagraph(
-    super.text, {
-    super.textAlign = TextAlign.start,
-    required super.textDirection,
-    super.softWrap = true,
-    super.overflow = TextOverflow.clip,
-    super.textScaleFactor = 1.0,
-    super.maxLines,
-    super.locale,
-    super.strutStyle,
-    super.textWidthBasis = TextWidthBasis.parent,
-    super.textHeightBehavior,
-    super.children,
-    super.selectionColor,
-    super.registrar,
+class _RenderParagraphProxy extends RenderProxyBox
+    with
+        BambooTextParagraphMixin,
+    // RenderParagraphProxyCursorMixin,
+        _PrototypeTextPainterMixin {
+  _RenderParagraphProxy({
+    TextStyle? textStyle,
+    TextAlign textAlign = TextAlign.start,
+    TextDirection? textDirection,
+    double textScaleFactor = 1.0,
+    StrutStyle? strutStyle,
+    Locale? locale,
+    TextWidthBasis textWidthBasis = TextWidthBasis.parent,
+    TextHeightBehavior? textHeightBehavior,
     required List<SpanGraphics> spanGraphicsList,
-  }) : _spanGraphicsList = spanGraphicsList;
+    required BambooTheme bambooTheme,
+    required CaretVisibleRegistrar caretRegistrar,
+  }) : _spanGraphicsList = spanGraphicsList {
+    _painter = TextPainter(
+      text: TextSpan(text: ' ', style: textStyle),
+      textAlign: textAlign,
+      textDirection: textDirection,
+      textScaleFactor: textScaleFactor,
+      strutStyle: strutStyle,
+      locale: locale,
+      textWidthBasis: textWidthBasis,
+      textHeightBehavior: textHeightBehavior,
+    );
+    // this.caretRegistrar = caretRegistrar;
+    // this.bambooTheme = bambooTheme;
+  }
 
   List<SpanGraphics> _spanGraphicsList;
 
   /// 如果[_spanGraphicsList]有变化，说明node有变化，那么[child]会markNeedsLayout
   /// 或markNeedsPaint，[_spanGraphicsList]不关心layout，所以只需markNeedsPaint
-  set spanGraphicsList(List<SpanGraphics> value) {
+  set spanRenders(List<SpanGraphics> value) {
     if (listEquals(_spanGraphicsList, value)) {
       return;
     }
@@ -383,139 +465,131 @@ class _RenderBambooParagraph extends RenderBambooParagraph {
   }
 
   @override
-  List<_SelectableFragment> getSelectableFragments() {
-    List<_SelectableFragment> fragments = [];
-    int spanStart = 0;
-    text.visitChildren((span) {
-      int spanLength = 0;
-      if (span is TextSpan) {
-        spanLength = span.text?.length ?? 0;
-      } else if (span is PlaceholderSpan) {
-        spanLength = span.toPlainText(includeSemanticsLabels: false).length;
-      } else {
-        throw Exception("不支持除TextSpan和PlaceholderSpan之外的类型");
-      }
-      if (span is BambooTextSpan) {
-        TextRange range = TextRange(
-          start: spanStart,
-          end: spanStart + spanLength,
-        );
-        if (!range.isCollapsed) {
-          fragments.add(_SelectableFragment(
-            node: span.textNode,
-            paragraph: this,
-            range: range,
-          ));
-        }
-      }
-      spanStart += spanLength;
-      return true;
-    });
-    return [];
-    // return fragments;
-  }
+  TextPainter? get _prototypeTextPainter => super._painter;
 
   @override
   void paint(PaintingContext context, Offset offset) {
     for (SpanGraphics spanRender in _spanGraphicsList) {
-      spanRender.beforePaint(this, context, offset);
+      spanRender.beforePaint(paragraph, context, offset);
     }
     super.paint(context, offset);
     for (SpanGraphics spanRender in _spanGraphicsList) {
-      spanRender.afterPaint(this, context, offset);
+      spanRender.afterPaint(paragraph, context, offset);
     }
-  }
-
-  Offset _getOffsetForPosition(TextPosition position) {
-    return getOffsetForCaret(position, Rect.zero) +
-        Offset(0, getFullHeightForCaret(position) ?? 0.0);
   }
 }
 
-class _SelectableFragment extends SelectableFragment {
-  _SelectableFragment({
-    required super.node,
-    required this.paragraph,
-    required this.range,
-  });
-
-  final _RenderBambooParagraph paragraph;
-
-  final TextRange range;
-
-  @override
-  void didChangeParagraphLayout() {
-    _cachedRect = null;
-  }
-
-  @override
-  SelectionResult dispatchSelectionEvent(SelectionEvent event) {
-    // TODO: implement dispatchSelectionEvent
-    throw UnimplementedError();
-  }
-
-  @override
-  SelectedContent? getSelectedContent() {
-    // TODO: implement getSelectedContent
-    throw UnimplementedError();
-  }
-
-  Matrix4 getTransformToParagraph() {
-    return Matrix4.translationValues(_rect.left, _rect.top, 0.0);
-  }
-
-  @override
-  Matrix4 getTransformTo(RenderObject? ancestor) {
-    return getTransformToParagraph()
-      ..multiply(paragraph.getTransformTo(ancestor));
-  }
-
-  @override
-  void paint(PaintingContext context, Offset offset) {
-    // TODO: implement paint
-  }
-
-  @override
-  void pushHandleLayers(LayerLink? startHandle, LayerLink? endHandle) {
-    // TODO: implement pushHandleLayers
-  }
-
-  /// 如果[_cachedRect]为空，则计算从[range.start]到[range.end]构成的rect，然后把结果
-  /// 设置给[_cachedRect]，并返回
-  Rect get _rect {
-    if (_cachedRect == null) {
-      final List<TextBox> boxes = paragraph.getBoxesForSelection(
-        TextSelection(
-          baseOffset: range.start,
-          extentOffset: range.end,
-        ),
+/// 通过混入这个类，可以查找到BambooTextParagraph
+mixin BambooTextParagraphMixin on RenderProxyBox {
+  late final BambooTextParagraph paragraph = () {
+    if (useCustomParagraph) {
+      return BambooTextParagraph.custom(
+        paragraph: _findRenderBambooParagraph(child),
       );
-      if (boxes.isNotEmpty) {
-        Rect result = boxes.first.toRect();
-        for (int index = 1; index < boxes.length; index += 1) {
-          result = result.expandToInclude(boxes[index].toRect());
-        }
-        _cachedRect = result;
-      } else {
-        final Offset offset = paragraph._getOffsetForPosition(
-          TextPosition(offset: range.start),
-        );
-        _cachedRect = Rect.fromPoints(
-          offset,
-          offset.translate(0, -paragraph.textPainter.preferredLineHeight),
-        );
-      }
+    } else {
+      return BambooTextParagraph.flutter(
+        paragraph: _findRenderParagraph(child),
+        prototypeTextPainter: _prototypeTextPainter,
+      );
     }
-    return _cachedRect!;
+  }();
+
+  TextPainter? get _prototypeTextPainter => null;
+
+  RenderParagraph _findRenderParagraph(RenderObject? renderObject) {
+    if (renderObject is RenderParagraph) {
+      return renderObject;
+    } else if (renderObject is RenderObjectWithChildMixin) {
+      return _findRenderParagraph(renderObject.child);
+    } else {
+      throw Exception();
+    }
   }
 
-  /// [_rect]的shadow，在[didChangeParagraphLayout]的时候被置空
-  Rect? _cachedRect;
+  RenderBambooParagraph _findRenderBambooParagraph(RenderObject? renderObject) {
+    if (renderObject is RenderBambooParagraph) {
+      return renderObject;
+    } else if (renderObject is RenderObjectWithChildMixin) {
+      return _findRenderBambooParagraph(renderObject.child);
+    } else {
+      throw Exception();
+    }
+  }
+}
+
+mixin _PrototypeTextPainterMixin on RenderBox {
+  late TextPainter _painter;
+
+  set textStyle(TextStyle? value) {
+    if (_painter.text!.style == value) {
+      return;
+    }
+    _painter.text = TextSpan(text: ' ', style: value);
+    markNeedsLayout();
+  }
+
+  set textAlign(TextAlign value) {
+    if (_painter.textAlign == value) {
+      return;
+    }
+    _painter.textAlign = value;
+    markNeedsLayout();
+  }
+
+  set textDirection(TextDirection? value) {
+    if (_painter.textDirection == value) {
+      return;
+    }
+    _painter.textDirection = value;
+    markNeedsLayout();
+  }
+
+  set textScaleFactor(double value) {
+    if (_painter.textScaleFactor == value) {
+      return;
+    }
+    _painter.textScaleFactor = value;
+    markNeedsLayout();
+  }
+
+  set strutStyle(StrutStyle? value) {
+    if (_painter.strutStyle == value) {
+      return;
+    }
+    _painter.strutStyle = value;
+    markNeedsLayout();
+  }
+
+  set locale(Locale? value) {
+    if (_painter.locale == value) {
+      return;
+    }
+    _painter.locale = value;
+    markNeedsLayout();
+  }
+
+  set textWidthBasis(TextWidthBasis value) {
+    if (_painter.textWidthBasis == value) {
+      return;
+    }
+    _painter.textWidthBasis = value;
+    markNeedsLayout();
+  }
+
+  set textHeightBehavior(TextHeightBehavior? value) {
+    if (_painter.textHeightBehavior == value) {
+      return;
+    }
+    _painter.textHeightBehavior = value;
+    markNeedsLayout();
+  }
+
+  double get preferredLineHeight => _painter.preferredLineHeight;
 
   @override
-  ui.Size get size => _rect.size;
-
-  @override
-  // TODO: implement value
-  SelectionGeometry get value => throw UnimplementedError();
+  void performLayout() {
+    super.performLayout();
+    _painter.layout(
+        minWidth: constraints.minWidth, maxWidth: constraints.maxWidth);
+  }
 }

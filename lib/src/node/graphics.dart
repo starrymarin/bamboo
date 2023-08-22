@@ -34,13 +34,13 @@ abstract class SpanGraphics<T extends Node> extends NodeGraphics<T> {
   InlineSpan buildSpan(BambooTextBuildContext bambooTextBuildContext);
 
   void beforePaint(
-    RenderBambooParagraph paragraph,
+    BambooTextParagraph paragraph,
     PaintingContext context,
     Offset offset,
   ) {}
 
   void afterPaint(
-    RenderBambooParagraph paragraph,
+    BambooTextParagraph paragraph,
     PaintingContext context,
     Offset offset,
   ) {}

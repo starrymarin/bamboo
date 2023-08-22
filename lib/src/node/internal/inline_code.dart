@@ -78,7 +78,7 @@ class _InlineCodeRendering extends SpanGraphics<InlineCodeNode> {
 
   @override
   void beforePaint(
-    RenderBambooParagraph paragraph,
+    BambooTextParagraph paragraph,
     PaintingContext context,
     Offset offset,
   ) {
