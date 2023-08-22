@@ -145,9 +145,8 @@ class BambooTextState extends State<BambooText> {
 
     Widget result = _BambooRichText(
       text: TextSpan(
-        style: textStyle,
-        children: [_buildTextSpan(BambooTextBuildContext._wrap(context))]
-      ),
+          style: textStyle,
+          children: [_buildTextSpan(BambooTextBuildContext._wrap(context))]),
       textAlign:
           widget.textAlign ?? defaultTextStyle.textAlign ?? TextAlign.start,
       textDirection: widget.textDirection,
@@ -387,33 +386,31 @@ class _RenderBambooParagraph extends RenderBambooParagraph {
   List<_SelectableFragment> getSelectableFragments() {
     List<_SelectableFragment> fragments = [];
     int spanStart = 0;
-    text.visitChildren(
-          (span) {
-        int spanLength = 0;
-        if (span is TextSpan) {
-          spanLength = span.text?.length ?? 0;
-        } else if (span is PlaceholderSpan) {
-          spanLength = span.toPlainText(includeSemanticsLabels: false).length;
-        } else {
-          throw Exception("不支持除TextSpan和PlaceholderSpan之外的类型");
+    text.visitChildren((span) {
+      int spanLength = 0;
+      if (span is TextSpan) {
+        spanLength = span.text?.length ?? 0;
+      } else if (span is PlaceholderSpan) {
+        spanLength = span.toPlainText(includeSemanticsLabels: false).length;
+      } else {
+        throw Exception("不支持除TextSpan和PlaceholderSpan之外的类型");
+      }
+      if (span is BambooTextSpan) {
+        TextRange range = TextRange(
+          start: spanStart,
+          end: spanStart + spanLength,
+        );
+        if (!range.isCollapsed) {
+          fragments.add(_SelectableFragment(
+            node: span.textNode,
+            paragraph: this,
+            range: range,
+          ));
         }
-        if (span is BambooTextSpan) {
-          TextRange range = TextRange(
-            start: spanStart,
-            end: spanStart + spanLength,
-          );
-          if (!range.isCollapsed) {
-            fragments.add(_SelectableFragment(
-              node: span.textNode,
-              paragraph: this,
-              range: range,
-            ));
-          }
-        }
-        spanStart += spanLength;
-        return true;
-      },
-    );
+      }
+      spanStart += spanLength;
+      return true;
+    });
     return [];
     // return fragments;
   }
@@ -428,6 +425,11 @@ class _RenderBambooParagraph extends RenderBambooParagraph {
       spanRender.afterPaint(this, context, offset);
     }
   }
+
+  Offset _getOffsetForPosition(TextPosition position) {
+    return getOffsetForCaret(position, Rect.zero) +
+        Offset(0, getFullHeightForCaret(position) ?? 0.0);
+  }
 }
 
 class _SelectableFragment extends SelectableFragment {
@@ -437,13 +439,13 @@ class _SelectableFragment extends SelectableFragment {
     required this.range,
   });
 
-  final RenderBambooParagraph paragraph;
+  final _RenderBambooParagraph paragraph;
 
   final TextRange range;
 
   @override
   void didChangeParagraphLayout() {
-    // TODO: implement didChangeParagraphLayout
+    _cachedRect = null;
   }
 
   @override
@@ -458,10 +460,14 @@ class _SelectableFragment extends SelectableFragment {
     throw UnimplementedError();
   }
 
+  Matrix4 getTransformToParagraph() {
+    return Matrix4.translationValues(_rect.left, _rect.top, 0.0);
+  }
+
   @override
   Matrix4 getTransformTo(RenderObject? ancestor) {
-    // TODO: implement getTransformTo
-    throw UnimplementedError();
+    return getTransformToParagraph()
+      ..multiply(paragraph.getTransformTo(ancestor));
   }
 
   @override
@@ -474,9 +480,40 @@ class _SelectableFragment extends SelectableFragment {
     // TODO: implement pushHandleLayers
   }
 
+  /// 如果[_cachedRect]为空，则计算从[range.start]到[range.end]构成的rect，然后把结果
+  /// 设置给[_cachedRect]，并返回
+  Rect get _rect {
+    if (_cachedRect == null) {
+      final List<TextBox> boxes = paragraph.getBoxesForSelection(
+        TextSelection(
+          baseOffset: range.start,
+          extentOffset: range.end,
+        ),
+      );
+      if (boxes.isNotEmpty) {
+        Rect result = boxes.first.toRect();
+        for (int index = 1; index < boxes.length; index += 1) {
+          result = result.expandToInclude(boxes[index].toRect());
+        }
+        _cachedRect = result;
+      } else {
+        final Offset offset = paragraph._getOffsetForPosition(
+          TextPosition(offset: range.start),
+        );
+        _cachedRect = Rect.fromPoints(
+          offset,
+          offset.translate(0, -paragraph.textPainter.preferredLineHeight),
+        );
+      }
+    }
+    return _cachedRect!;
+  }
+
+  /// [_rect]的shadow，在[didChangeParagraphLayout]的时候被置空
+  Rect? _cachedRect;
+
   @override
-  // TODO: implement size
-  ui.Size get size => throw UnimplementedError();
+  ui.Size get size => _rect.size;
 
   @override
   // TODO: implement value
